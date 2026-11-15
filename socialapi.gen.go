@@ -3756,6 +3756,26 @@ type ApiEndpointsPostsListResponse struct {
 	Pagination *ApiEndpointsPaginationInfo `json:"pagination,omitempty"`
 }
 
+// ApiEndpointsPostsMetricsItem defines model for api_endpoints.PostsMetricsItem.
+type ApiEndpointsPostsMetricsItem struct {
+	// Error Set when this post could not be read: not found, or a platform post ID that matches several posts.
+	Error *ApiEndpointsPostTargetErrorResponse `json:"error,omitempty"`
+
+	// PostId The post ID as given in post_ids.
+	//
+	// Example: 9b2f1c34-5e6a-4d7b-8c9d-0e1f2a3b4c5d
+	PostId *string `json:"post_id,omitempty"`
+
+	// Targets Same targets as GET /v1/posts/{pid}/metrics. Empty when error is set.
+	Targets *[]ApiEndpointsPostTargetResponse `json:"targets,omitempty"`
+}
+
+// ApiEndpointsPostsMetricsResponse defines model for api_endpoints.PostsMetricsResponse.
+type ApiEndpointsPostsMetricsResponse struct {
+	// Data One item per distinct post ID, in request order.
+	Data *[]ApiEndpointsPostsMetricsItem `json:"data,omitempty"`
+}
+
 // ApiEndpointsPrivateReplyAttachmentInput defines model for api_endpoints.PrivateReplyAttachmentInput.
 type ApiEndpointsPrivateReplyAttachmentInput struct {
 	// Source Source is the attachment reference; its meaning is given by source_type.
@@ -7671,6 +7691,12 @@ type PostPostsImportParams struct {
 // PostPostsImportParamsDryRun defines parameters for PostPostsImport.
 type PostPostsImportParamsDryRun string
 
+// GetPostsMetricsParams defines parameters for GetPostsMetrics.
+type GetPostsMetricsParams struct {
+	// PostIds Comma-separated post IDs (SocialAPI or platform), at most 20
+	PostIds string `form:"post_ids" json:"post_ids"`
+}
+
 // GetPostsValidateParams defines parameters for GetPostsValidate.
 type GetPostsValidateParams struct {
 	// Platform Filter to a single platform
@@ -9571,6 +9597,14 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /posts/import (the `PostPostsImport` operationId).
 	PostPostsImportWithBody(ctx context.Context, params *PostPostsImportParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetPostsMetrics Get metrics for several posts
+	//
+	// Fetches engagement metrics for up to 20 published posts in one call. Each ID can be a SocialAPI post ID or a platform post ID. Duplicate IDs are returned once.
+	// Each item has the same targets as GET /v1/posts/{pid}/metrics. A post that cannot be read (not found, or a platform post ID that matches several posts) gets an `error` on its item instead of failing the request.
+	//
+	// Corresponds with GET /posts/metrics (the `GetPostsMetrics` operationId).
+	GetPostsMetrics(ctx context.Context, params *GetPostsMetricsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetPostsValidate Get platform constraints
 	//
@@ -13445,6 +13479,24 @@ func (c *Client) PostPosts(ctx context.Context, body PostPostsJSONRequestBody, r
 // Corresponds with POST /posts/import (the `PostPostsImport` operationId).
 func (c *Client) PostPostsImportWithBody(ctx context.Context, params *PostPostsImportParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostPostsImportRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetPostsMetrics Get metrics for several posts
+//
+// Fetches engagement metrics for up to 20 published posts in one call. Each ID can be a SocialAPI post ID or a platform post ID. Duplicate IDs are returned once.
+// Each item has the same targets as GET /v1/posts/{pid}/metrics. A post that cannot be read (not found, or a platform post ID that matches several posts) gets an `error` on its item instead of failing the request.
+//
+// Corresponds with GET /posts/metrics (the `GetPostsMetrics` operationId).
+func (c *Client) GetPostsMetrics(ctx context.Context, params *GetPostsMetricsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPostsMetricsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -21698,6 +21750,56 @@ func NewPostPostsImportRequestWithBody(server string, params *PostPostsImportPar
 	return req, nil
 }
 
+// NewGetPostsMetricsRequest constructs an http.Request for the GetPostsMetrics method
+func NewGetPostsMetricsRequest(server string, params *GetPostsMetricsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/posts/metrics")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "post_ids", params.PostIds, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetPostsValidateRequest constructs an http.Request for the GetPostsValidate method
 func NewGetPostsValidateRequest(server string, params *GetPostsValidateParams) (*http.Request, error) {
 	var err error
@@ -24802,6 +24904,16 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /posts/import (the `PostPostsImport` operationId).
 	PostPostsImportWithBodyWithResponse(ctx context.Context, params *PostPostsImportParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostPostsImportResponse, error)
+
+	// GetPostsMetricsWithResponse Get metrics for several posts
+	//
+	// Fetches engagement metrics for up to 20 published posts in one call. Each ID can be a SocialAPI post ID or a platform post ID. Duplicate IDs are returned once.
+	// Each item has the same targets as GET /v1/posts/{pid}/metrics. A post that cannot be read (not found, or a platform post ID that matches several posts) gets an `error` on its item instead of failing the request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /posts/metrics (the `GetPostsMetrics` operationId).
+	GetPostsMetricsWithResponse(ctx context.Context, params *GetPostsMetricsParams, reqEditors ...RequestEditorFn) (*GetPostsMetricsResponse, error)
 
 	// GetPostsValidateWithResponse Get platform constraints
 	//
@@ -34474,6 +34586,61 @@ func (r PostPostsImportResponse) ContentType() string {
 	return ""
 }
 
+type GetPostsMetricsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ApiEndpointsPostsMetricsResponse
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *ApiEndpointsErrorResponse
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *ApiEndpointsErrorResponse
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetPostsMetricsResponse) GetJSON200() *ApiEndpointsPostsMetricsResponse {
+	return r.JSON200
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r GetPostsMetricsResponse) GetJSON400() *ApiEndpointsErrorResponse {
+	return r.JSON400
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetPostsMetricsResponse) GetJSON401() *ApiEndpointsErrorResponse {
+	return r.JSON401
+}
+
+// GetBody returns the raw response body bytes
+func (r GetPostsMetricsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetPostsMetricsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetPostsMetricsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetPostsMetricsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetPostsValidateResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -39266,6 +39433,22 @@ func (c *ClientWithResponses) PostPostsImportWithBodyWithResponse(ctx context.Co
 		return nil, err
 	}
 	return ParsePostPostsImportResponse(rsp)
+}
+
+// GetPostsMetricsWithResponse Get metrics for several posts
+//
+// Fetches engagement metrics for up to 20 published posts in one call. Each ID can be a SocialAPI post ID or a platform post ID. Duplicate IDs are returned once.
+// Each item has the same targets as GET /v1/posts/{pid}/metrics. A post that cannot be read (not found, or a platform post ID that matches several posts) gets an `error` on its item instead of failing the request.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /posts/metrics (the `GetPostsMetrics` operationId).
+func (c *ClientWithResponses) GetPostsMetricsWithResponse(ctx context.Context, params *GetPostsMetricsParams, reqEditors ...RequestEditorFn) (*GetPostsMetricsResponse, error) {
+	rsp, err := c.GetPostsMetrics(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetPostsMetricsResponse(rsp)
 }
 
 // GetPostsValidateWithResponse Get platform constraints
@@ -47027,6 +47210,46 @@ func ParsePostPostsImportResponse(rsp *http.Response) (*PostPostsImportResponse,
 			return nil, err
 		}
 		response.JSON429 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetPostsMetricsResponse parses an HTTP response from a GetPostsMetricsWithResponse call
+func ParseGetPostsMetricsResponse(rsp *http.Response) (*GetPostsMetricsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetPostsMetricsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ApiEndpointsPostsMetricsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ApiEndpointsErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ApiEndpointsErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
 
 	}
 
