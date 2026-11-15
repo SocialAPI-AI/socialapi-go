@@ -1,0 +1,5 @@
+package: socialapi
+output: socialapi.gen.go
+generate:
+  models: true
+  client: true
