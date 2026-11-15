@@ -3,3 +3,7 @@ output: socialapi.gen.go
 generate:
   models: true
   client: true
+output-options:
+  # The client wraps each operation's response in <OperationId><suffix>.
+  # The default suffix "Response" collides with schemas such as ConnectAccountResponse.
+  response-type-suffix: Result

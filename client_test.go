@@ -33,23 +33,24 @@ func testClient(t *testing.T, status int, body string) *ClientWithResponses {
 
 func TestForwardCompatibleDecode(t *testing.T) {
 	// An unlisted platform, an unknown field, and a null must all decode.
-	c := testClient(t, 200, `{"id":"p_1","status":"published","queue_id":null,"field_from_the_future":1,
-		"targets":[{"platform":"platform_from_the_future"}]}`)
-	resp, err := c.GetPostsPidWithResponse(context.Background(), "p_1")
+	c := testClient(t, 200, `{"id":"p_1","status":"published","text":null,"hidden":false,"retry_count":0,"queue_id":null,
+		"created_at":"2026-03-14T09:00:00Z","updated_at":"2026-03-14T09:00:00Z","field_from_the_future":1,
+		"targets":[{"platform":"platform_from_the_future","status":"published"}]}`)
+	resp, err := c.GetPostWithResponse(context.Background(), "p_1")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if resp.JSON200 == nil || *resp.JSON200.Id != "p_1" {
+	if resp.JSON200 == nil || resp.JSON200.Id != "p_1" {
 		t.Fatalf("not decoded: %s", resp.Body)
 	}
-	if got := string(*(*resp.JSON200.Targets)[0].Platform); got != "platform_from_the_future" {
+	if got := string((*resp.JSON200.Targets)[0].Platform); got != "platform_from_the_future" {
 		t.Fatalf("platform = %q", got)
 	}
 }
 
 func TestErrorResponse(t *testing.T) {
 	c := testClient(t, 404, `{"error":{"code":"post.not_found","message":"Post not found"},"request_id":"req_1"}`)
-	resp, err := c.GetPostsPidWithResponse(context.Background(), "p_1")
+	resp, err := c.GetPostWithResponse(context.Background(), "p_1")
 	if err != nil {
 		t.Fatal(err)
 	}

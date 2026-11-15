@@ -11,7 +11,7 @@ client, err := socialapi.NewClientWithResponses(socialapi.DefaultServer, sociala
 if err != nil {
 	log.Fatal(err)
 }
-resp, err := client.GetBrandsWithResponse(ctx)
+resp, err := client.ListBrandsWithResponse(ctx)
 ```
 
 Each response has a typed field per status code (`resp.JSON200`, `resp.JSON404`, ...). The API reference is at [docs.social-api.ai](https://docs.social-api.ai).
