@@ -1166,20 +1166,20 @@ type Account struct {
 
 // AccountPage defines model for AccountPage.
 type AccountPage struct {
-	About              *string `json:"about,omitempty"`
-	Category           *string `json:"category,omitempty"`
-	CoverPhotoUrl      *string `json:"cover_photo_url,omitempty"`
-	EnrichedAt         *string `json:"enriched_at,omitempty"`
-	FollowersCount     *int    `json:"followers_count,omitempty"`
-	Id                 string  `json:"id"`
-	IsActive           bool    `json:"is_active"`
-	IsDefault          bool    `json:"is_default"`
-	Link               *string `json:"link,omitempty"`
-	Name               string  `json:"name"`
-	PlatformPageId     string  `json:"platform_page_id"`
-	ProfilePictureUrl  *string `json:"profile_picture_url,omitempty"`
-	Username           *string `json:"username,omitempty"`
-	VerificationStatus *string `json:"verification_status,omitempty"`
+	About              *string    `json:"about,omitempty"`
+	Category           *string    `json:"category,omitempty"`
+	CoverPhotoUrl      *string    `json:"cover_photo_url,omitempty"`
+	EnrichedAt         *time.Time `json:"enriched_at,omitempty"`
+	FollowersCount     *int       `json:"followers_count,omitempty"`
+	Id                 string     `json:"id"`
+	IsActive           bool       `json:"is_active"`
+	IsDefault          bool       `json:"is_default"`
+	Link               *string    `json:"link,omitempty"`
+	Name               string     `json:"name"`
+	PlatformPageId     string     `json:"platform_page_id"`
+	ProfilePictureUrl  *string    `json:"profile_picture_url,omitempty"`
+	Username           *string    `json:"username,omitempty"`
+	VerificationStatus *string    `json:"verification_status,omitempty"`
 }
 
 // AccountPageResponse defines model for AccountPageResponse.
@@ -1210,10 +1210,10 @@ type AccountPostsSyncStatus struct {
 	// Error Error says why the last sync failed. Empty unless State is "failed".
 	//
 	// Example:
-	Error        string  `json:"error"`
-	FinishedAt   *string `json:"finished_at"`
-	LastSyncedAt *string `json:"last_synced_at"`
-	StartedAt    *string `json:"started_at"`
+	Error        string     `json:"error"`
+	FinishedAt   *time.Time `json:"finished_at"`
+	LastSyncedAt *time.Time `json:"last_synced_at"`
+	StartedAt    *time.Time `json:"started_at"`
 
 	// State State is "idle", "syncing", or "failed". A finished sync is idle with a
 	// newer LastSyncedAt.
@@ -1288,7 +1288,7 @@ type AnalyticsOverview struct {
 	// range. Absent when none has been refreshed yet.
 	//
 	// Example: 2026-11-05T08:00:00Z
-	MetricsSyncedAt *string `json:"metrics_synced_at,omitempty"`
+	MetricsSyncedAt *time.Time `json:"metrics_synced_at,omitempty"`
 
 	// Previous Previous is the same figures for the window of equal length that ends
 	// the day before from.
@@ -1415,8 +1415,8 @@ type Author struct {
 // Automation defines model for Automation.
 type Automation struct {
 	// AccountId Example: acc_01HZ9X3Q4R5M6N7P8V2K0W1J
-	AccountId string `json:"account_id"`
-	CreatedAt string `json:"created_at"`
+	AccountId string    `json:"account_id"`
+	CreatedAt time.Time `json:"created_at"`
 
 	// FailedCount Actions that failed
 	FailedCount int `json:"failed_count"`
@@ -1449,7 +1449,7 @@ type Automation struct {
 	//
 	// Example: comment
 	Trigger   AutomationTrigger `json:"trigger"`
-	UpdatedAt string            `json:"updated_at"`
+	UpdatedAt time.Time         `json:"updated_at"`
 }
 
 // AutomationListResponse defines model for AutomationListResponse.
@@ -1561,7 +1561,7 @@ type CommentWithCapabilities struct {
 	AuthorProfileUrl *string             `json:"author_profile_url,omitempty"`
 	AuthorUsername   string              `json:"author_username"`
 	Capabilities     CommentCapabilities `json:"capabilities"`
-	CreatedAt        string              `json:"created_at"`
+	CreatedAt        time.Time           `json:"created_at"`
 	HasReplies       bool                `json:"has_replies"`
 
 	// Id ID is the canonical SocialAPI interaction id (sapi_cmt_…). Prefer it over
@@ -1698,7 +1698,7 @@ type ConversationStatus string
 // ConversationsListResponse defines model for ConversationsListResponse.
 type ConversationsListResponse struct {
 	Data         *[]InboxConversation `json:"data"`
-	LastSyncedAt *string              `json:"last_synced_at"`
+	LastSyncedAt *time.Time           `json:"last_synced_at"`
 	Pagination   InboxPagination      `json:"pagination"`
 
 	// SyncState The state of this account's conversation list sync: idle, syncing or
@@ -2273,13 +2273,13 @@ type ExportsListResponse struct {
 
 // FacebookAccountSummaryResponse defines model for FacebookAccountSummaryResponse.
 type FacebookAccountSummaryResponse struct {
-	FollowerCount int    `json:"follower_count"`
-	Interactions  int    `json:"interactions"`
-	NetFollows    int    `json:"net_follows"`
-	PeriodEnd     string `json:"period_end"`
-	PeriodStart   string `json:"period_start"`
-	Reach         int    `json:"reach"`
-	Views         int    `json:"views"`
+	FollowerCount int       `json:"follower_count"`
+	Interactions  int       `json:"interactions"`
+	NetFollows    int       `json:"net_follows"`
+	PeriodEnd     time.Time `json:"period_end"`
+	PeriodStart   time.Time `json:"period_start"`
+	Reach         int       `json:"reach"`
+	Views         int       `json:"views"`
 }
 
 // FacebookDailyInsightsResponse defines model for FacebookDailyInsightsResponse.
@@ -2313,7 +2313,7 @@ type FilterType string
 
 // Firing defines model for Firing.
 type Firing struct {
-	CreatedAt string `json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 
 	// EventId Platform id of the comment or message
 	//
@@ -3140,39 +3140,39 @@ type ImportRowError struct {
 
 // InboxConversation defines model for InboxConversation.
 type InboxConversation struct {
-	AccountId          string   `json:"account_id"`
-	CreatedAt          string   `json:"created_at"`
-	Id                 string   `json:"id"`
-	LastMessage        string   `json:"last_message"`
-	LastMessageAt      *string  `json:"last_message_at"`
-	PageId             *string  `json:"page_id,omitempty"`
-	ParticipantId      string   `json:"participant_id"`
-	ParticipantName    string   `json:"participant_name"`
-	ParticipantPicture string   `json:"participant_picture"`
-	Platform           Platform `json:"platform"`
-	PlatformId         string   `json:"platform_id"`
-	Status             string   `json:"status"`
-	UnreadCount        int      `json:"unread_count"`
-	UpdatedAt          string   `json:"updated_at"`
-	UserId             string   `json:"user_id"`
+	AccountId          string     `json:"account_id"`
+	CreatedAt          time.Time  `json:"created_at"`
+	Id                 string     `json:"id"`
+	LastMessage        string     `json:"last_message"`
+	LastMessageAt      *time.Time `json:"last_message_at"`
+	PageId             *string    `json:"page_id,omitempty"`
+	ParticipantId      string     `json:"participant_id"`
+	ParticipantName    string     `json:"participant_name"`
+	ParticipantPicture string     `json:"participant_picture"`
+	Platform           Platform   `json:"platform"`
+	PlatformId         string     `json:"platform_id"`
+	Status             string     `json:"status"`
+	UnreadCount        int        `json:"unread_count"`
+	UpdatedAt          time.Time  `json:"updated_at"`
+	UserId             string     `json:"user_id"`
 }
 
 // InboxMessage defines model for InboxMessage.
 type InboxMessage struct {
-	AttachmentType *string `json:"attachment_type"`
-	AttachmentUrl  *string `json:"attachment_url"`
-	ConversationId string  `json:"conversation_id"`
-	CreatedAt      string  `json:"created_at"`
-	Direction      string  `json:"direction"`
-	Id             string  `json:"id"`
-	PlatformId     string  `json:"platform_id"`
+	AttachmentType *string   `json:"attachment_type"`
+	AttachmentUrl  *string   `json:"attachment_url"`
+	ConversationId string    `json:"conversation_id"`
+	CreatedAt      time.Time `json:"created_at"`
+	Direction      string    `json:"direction"`
+	Id             string    `json:"id"`
+	PlatformId     string    `json:"platform_id"`
 
 	// ReplyTo ReplyTo is the message this one replies to, or null when it is not a reply.
 	ReplyTo         *MessageReply `json:"reply_to"`
 	SenderId        string        `json:"sender_id"`
 	SenderName      string        `json:"sender_name"`
 	Status          *string       `json:"status,omitempty"`
-	StatusUpdatedAt *string       `json:"status_updated_at,omitempty"`
+	StatusUpdatedAt *time.Time    `json:"status_updated_at,omitempty"`
 	Text            *string       `json:"text"`
 }
 
@@ -3190,20 +3190,20 @@ type InboxPaginationOpt struct {
 
 // InboxPost defines model for InboxPost.
 type InboxPost struct {
-	AccountId    string   `json:"account_id"`
-	CommentCount int      `json:"comment_count"`
-	Content      *string  `json:"content"`
-	CreatedAt    string   `json:"created_at"`
-	Id           string   `json:"id"`
-	LikeCount    int      `json:"like_count"`
-	PageId       *string  `json:"page_id,omitempty"`
-	Permalink    *string  `json:"permalink"`
-	Platform     Platform `json:"platform"`
-	PlatformId   *string  `json:"platform_id,omitempty"`
-	PublishedAt  *string  `json:"published_at"`
-	Thumbnail    *string  `json:"thumbnail"`
-	UpdatedAt    string   `json:"updated_at"`
-	UserId       string   `json:"user_id"`
+	AccountId    string     `json:"account_id"`
+	CommentCount int        `json:"comment_count"`
+	Content      *string    `json:"content"`
+	CreatedAt    time.Time  `json:"created_at"`
+	Id           string     `json:"id"`
+	LikeCount    int        `json:"like_count"`
+	PageId       *string    `json:"page_id,omitempty"`
+	Permalink    *string    `json:"permalink"`
+	Platform     Platform   `json:"platform"`
+	PlatformId   *string    `json:"platform_id,omitempty"`
+	PublishedAt  *time.Time `json:"published_at"`
+	Thumbnail    *string    `json:"thumbnail"`
+	UpdatedAt    time.Time  `json:"updated_at"`
+	UserId       string     `json:"user_id"`
 }
 
 // InboxSyncRequest defines model for InboxSyncRequest.
@@ -3223,10 +3223,10 @@ type InboxSyncResponse struct {
 // InboxSyncStatus defines model for InboxSyncStatus.
 type InboxSyncStatus struct {
 	// Error Example:
-	Error        string  `json:"error"`
-	FinishedAt   *string `json:"finished_at"`
-	LastSyncedAt *string `json:"last_synced_at"`
-	StartedAt    *string `json:"started_at"`
+	Error        string     `json:"error"`
+	FinishedAt   *time.Time `json:"finished_at"`
+	LastSyncedAt *time.Time `json:"last_synced_at"`
+	StartedAt    *time.Time `json:"started_at"`
 
 	// State State is "idle", "syncing", or "failed". A finished sync is idle with a
 	// fresher LastSyncedAt; there is no terminal "done".
@@ -3242,19 +3242,19 @@ type InboxSyncStatus struct {
 
 // InstagramAccountSummaryResponse defines model for InstagramAccountSummaryResponse.
 type InstagramAccountSummaryResponse struct {
-	AccountsEngaged int    `json:"accounts_engaged"`
-	DisplayName     string `json:"display_name"`
-	FollowerCount   int    `json:"follower_count"`
-	FollowingCount  int    `json:"following_count"`
-	Interactions    int    `json:"interactions"`
-	MediaCount      int    `json:"media_count"`
-	NetFollows      int    `json:"net_follows"`
-	PeriodEnd       string `json:"period_end"`
-	PeriodStart     string `json:"period_start"`
-	PictureUrl      string `json:"picture_url"`
-	Reach           int    `json:"reach"`
-	Username        string `json:"username"`
-	Views           int    `json:"views"`
+	AccountsEngaged int       `json:"accounts_engaged"`
+	DisplayName     string    `json:"display_name"`
+	FollowerCount   int       `json:"follower_count"`
+	FollowingCount  int       `json:"following_count"`
+	Interactions    int       `json:"interactions"`
+	MediaCount      int       `json:"media_count"`
+	NetFollows      int       `json:"net_follows"`
+	PeriodEnd       time.Time `json:"period_end"`
+	PeriodStart     time.Time `json:"period_start"`
+	PictureUrl      string    `json:"picture_url"`
+	Reach           int       `json:"reach"`
+	Username        string    `json:"username"`
+	Views           int       `json:"views"`
 }
 
 // InstagramCollaboratorsResponse defines model for InstagramCollaboratorsResponse.
@@ -3343,7 +3343,7 @@ type Interaction struct {
 	// ReceivedAt [always]
 	//
 	// Example: 2026-02-15T14:30:00Z
-	ReceivedAt string `json:"received_at"`
+	ReceivedAt time.Time `json:"received_at"`
 
 	// Recipient [platform: instagram, facebook, whatsapp] Non-nil for echo/sent DM events; nil for all other interaction types
 	Recipient *Author `json:"recipient,omitempty"`
@@ -3739,7 +3739,7 @@ type MessageReply struct {
 // MessagesListResponse defines model for MessagesListResponse.
 type MessagesListResponse struct {
 	Data         *[]InboxMessage `json:"data"`
-	LastSyncedAt *string         `json:"last_synced_at"`
+	LastSyncedAt *time.Time      `json:"last_synced_at"`
 	Pagination   InboxPagination `json:"pagination"`
 
 	// SyncState The state of this conversation's message sync: idle, syncing or failed.
@@ -3976,7 +3976,7 @@ type OverviewPlatform struct {
 	Likes int `json:"likes"`
 
 	// Platform Example: instagram
-	Platform string `json:"platform"`
+	Platform Platform `json:"platform"`
 
 	// Posts Example: 42
 	Posts int `json:"posts"`
@@ -4025,13 +4025,13 @@ type OverviewTopPost struct {
 	Permalink *string `json:"permalink,omitempty"`
 
 	// Platform Example: instagram
-	Platform string `json:"platform"`
+	Platform Platform `json:"platform"`
 
 	// PostId Example: 7c9e6679-7425-40de-944b-e07fc1f90ae7
 	PostId string `json:"post_id"`
 
 	// PublishedAt Example: 2026-10-14T09:30:00Z
-	PublishedAt string `json:"published_at"`
+	PublishedAt time.Time `json:"published_at"`
 
 	// Text Example: Our autumn menu is here
 	Text *string `json:"text,omitempty"`
@@ -4369,7 +4369,7 @@ type Post struct {
 	SharesCount int `json:"shares_count"`
 
 	// Timestamp [always]
-	Timestamp string `json:"timestamp"`
+	Timestamp time.Time `json:"timestamp"`
 
 	// ViewCount [platform: youtube, tiktok] Zero on other platforms
 	ViewCount int `json:"view_count"`
@@ -4392,17 +4392,17 @@ type PostChildAttachment struct {
 
 // PostInsight defines model for PostInsight.
 type PostInsight struct {
-	Clicks         int     `json:"clicks"`
-	Comments       int     `json:"comments"`
-	CreatedAt      string  `json:"created_at"`
-	EngagementRate float32 `json:"engagement_rate"`
-	Impressions    int     `json:"impressions"`
-	Likes          int     `json:"likes"`
-	Permalink      *string `json:"permalink,omitempty"`
-	PostId         string  `json:"post_id"`
-	Shares         int     `json:"shares"`
-	Text           *string `json:"text,omitempty"`
-	UniqueViews    int     `json:"unique_views"`
+	Clicks         int        `json:"clicks"`
+	Comments       int        `json:"comments"`
+	CreatedAt      *time.Time `json:"created_at,omitempty"`
+	EngagementRate float32    `json:"engagement_rate"`
+	Impressions    int        `json:"impressions"`
+	Likes          int        `json:"likes"`
+	Permalink      *string    `json:"permalink,omitempty"`
+	PostId         string     `json:"post_id"`
+	Shares         int        `json:"shares"`
+	Text           *string    `json:"text,omitempty"`
+	UniqueViews    int        `json:"unique_views"`
 }
 
 // PostPlace defines model for PostPlace.
@@ -4786,7 +4786,7 @@ type Queue struct {
 	BrandId string `json:"brand_id"`
 
 	// CreatedAt When the Queue was created.
-	CreatedAt string `json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 
 	// Id Queue ID.
 	//
@@ -4812,7 +4812,7 @@ type Queue struct {
 	Timezone string `json:"timezone"`
 
 	// UpdatedAt When the Queue was last changed.
-	UpdatedAt string `json:"updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // QueueListResponse defines model for QueueListResponse.
@@ -5219,7 +5219,7 @@ type Story struct {
 	// ExpiresAt when media_url stops working; omitted when it cannot be determined
 	//
 	// Example: 2026-09-12T14:03:00Z
-	ExpiresAt *string `json:"expires_at,omitempty"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
 
 	// Id platform-native story id
 	//
@@ -5411,8 +5411,8 @@ type ThreadsPublicProfile struct {
 
 // ThreadsTimeSeriesPoint defines model for ThreadsTimeSeriesPoint.
 type ThreadsTimeSeriesPoint struct {
-	EndTime string `json:"end_time"`
-	Value   int    `json:"value"`
+	EndTime time.Time `json:"end_time"`
+	Value   int       `json:"value"`
 }
 
 // TikTokAccountSummaryResponse defines model for TikTokAccountSummaryResponse.
@@ -5630,7 +5630,7 @@ type UpdateQueueResponse struct {
 	BrandId string `json:"brand_id"`
 
 	// CreatedAt When the Queue was created.
-	CreatedAt string `json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 
 	// Id Queue ID.
 	//
@@ -5659,7 +5659,7 @@ type UpdateQueueResponse struct {
 	Timezone string `json:"timezone"`
 
 	// UpdatedAt When the Queue was last changed.
-	UpdatedAt string `json:"updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // UpdateWebhookRequest defines model for UpdateWebhookRequest.
@@ -5761,7 +5761,7 @@ type UserMeResponse struct {
 	BillingBlocked bool `json:"billing_blocked"`
 
 	// BillingBlockedAt BillingBlockedAt is when the block began, or null when not blocked.
-	BillingBlockedAt *string `json:"billing_blocked_at,omitempty"`
+	BillingBlockedAt *time.Time `json:"billing_blocked_at,omitempty"`
 
 	// BillingCurrency BillingCurrency is the currency your subscription is billed in: "usd"
 	// or "eur". A subscription never changes currency, so plan changes are
@@ -5849,7 +5849,7 @@ type ValidatePostRequest struct {
 	PlatformData *map[string]interface{} `json:"platform_data,omitempty"`
 
 	// Platforms Platforms lists platform names to validate against (e.g. ["instagram", "linkedin"]).
-	Platforms *[]string `json:"platforms,omitempty"`
+	Platforms *[]Platform `json:"platforms,omitempty"`
 
 	// ScheduledAt ScheduledAt validates the schedule time (must be in the future, within platform limits).
 	//
