@@ -8949,14 +8949,14 @@ type ClientInterface interface {
 
 	// GetPlatformsFacebookLoginsLoginIdPages List a Facebook login's Pages
 	//
-	// Lists every Page this login can manage, with the brand that holds each. assignable reflects ownership only. When facebook_page_selection is true, assigning can still fail on the per-brand Page allowance.
+	// Lists every Page this login can manage, with the brand that holds each. assignable reflects ownership only. When facebook_page_selection is true, assigning can still fail on the per-brand Page allowance. A brand-restricted key does not see Pages held by brands outside its list.
 	//
 	// Corresponds with GET /platforms/facebook/logins/{loginId}/pages (the `GetPlatformsFacebookLoginsLoginIdPages` operationId).
 	GetPlatformsFacebookLoginsLoginIdPages(ctx context.Context, loginId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignWithBody Assign a Facebook Page to a brand
 	//
-	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
+	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap. A brand-restricted key can only move Pages held by brands on its list: any other Page returns 400 validation.page_not_granted.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -8965,7 +8965,7 @@ type ClientInterface interface {
 
 	// PostPlatformsFacebookLoginsLoginIdPagesPageIdAssign Assign a Facebook Page to a brand
 	//
-	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
+	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap. A brand-restricted key can only move Pages held by brands on its list: any other Page returns 400 validation.page_not_granted.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -9291,6 +9291,8 @@ type ClientInterface interface {
 
 	// PostPlatformsTiktokAccountsIdSync Re-sync a TikTok account's videos
 	//
+	// Starts a sync of the account's videos and returns once it is started. Poll GET /accounts/{id}/sync until state leaves "syncing", then read the posts. Shares the cooldown and the daily sync limit of POST /accounts/{id}/sync.
+	//
 	// Corresponds with POST /platforms/tiktok/accounts/{id}/sync (the `PostPlatformsTiktokAccountsIdSync` operationId).
 	PostPlatformsTiktokAccountsIdSync(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -9486,6 +9488,8 @@ type ClientInterface interface {
 	GetPlatformsYoutubeAccountsIdSummary(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostPlatformsYoutubeAccountsIdSync Re-sync a YouTube account's videos
+	//
+	// Starts a sync of the account's videos and returns once it is started. Poll GET /accounts/{id}/sync until state leaves "syncing", then read the posts. Shares the cooldown and the daily sync limit of POST /accounts/{id}/sync.
 	//
 	// Corresponds with POST /platforms/youtube/accounts/{id}/sync (the `PostPlatformsYoutubeAccountsIdSync` operationId).
 	PostPlatformsYoutubeAccountsIdSync(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -12046,7 +12050,7 @@ func (c *Client) GetPlatformsFacebookAccountsIdSummary(ctx context.Context, id s
 
 // GetPlatformsFacebookLoginsLoginIdPages List a Facebook login's Pages
 //
-// Lists every Page this login can manage, with the brand that holds each. assignable reflects ownership only. When facebook_page_selection is true, assigning can still fail on the per-brand Page allowance.
+// Lists every Page this login can manage, with the brand that holds each. assignable reflects ownership only. When facebook_page_selection is true, assigning can still fail on the per-brand Page allowance. A brand-restricted key does not see Pages held by brands outside its list.
 //
 // Corresponds with GET /platforms/facebook/logins/{loginId}/pages (the `GetPlatformsFacebookLoginsLoginIdPages` operationId).
 func (c *Client) GetPlatformsFacebookLoginsLoginIdPages(ctx context.Context, loginId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -12063,7 +12067,7 @@ func (c *Client) GetPlatformsFacebookLoginsLoginIdPages(ctx context.Context, log
 
 // PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignWithBody Assign a Facebook Page to a brand
 //
-// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
+// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap. A brand-restricted key can only move Pages held by brands on its list: any other Page returns 400 validation.page_not_granted.
 //
 // Takes any type of body and a specified content type.
 //
@@ -12082,7 +12086,7 @@ func (c *Client) PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignWithBody(ctx
 
 // PostPlatformsFacebookLoginsLoginIdPagesPageIdAssign Assign a Facebook Page to a brand
 //
-// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
+// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap. A brand-restricted key can only move Pages held by brands on its list: any other Page returns 400 validation.page_not_granted.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -12828,6 +12832,8 @@ func (c *Client) GetPlatformsTiktokAccountsIdSummary(ctx context.Context, id str
 
 // PostPlatformsTiktokAccountsIdSync Re-sync a TikTok account's videos
 //
+// Starts a sync of the account's videos and returns once it is started. Poll GET /accounts/{id}/sync until state leaves "syncing", then read the posts. Shares the cooldown and the daily sync limit of POST /accounts/{id}/sync.
+//
 // Corresponds with POST /platforms/tiktok/accounts/{id}/sync (the `PostPlatformsTiktokAccountsIdSync` operationId).
 func (c *Client) PostPlatformsTiktokAccountsIdSync(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostPlatformsTiktokAccountsIdSyncRequest(c.Server, id)
@@ -13263,6 +13269,8 @@ func (c *Client) GetPlatformsYoutubeAccountsIdSummary(ctx context.Context, id st
 }
 
 // PostPlatformsYoutubeAccountsIdSync Re-sync a YouTube account's videos
+//
+// Starts a sync of the account's videos and returns once it is started. Poll GET /accounts/{id}/sync until state leaves "syncing", then read the posts. Shares the cooldown and the daily sync limit of POST /accounts/{id}/sync.
 //
 // Corresponds with POST /platforms/youtube/accounts/{id}/sync (the `PostPlatformsYoutubeAccountsIdSync` operationId).
 func (c *Client) PostPlatformsYoutubeAccountsIdSync(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -24176,7 +24184,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetPlatformsFacebookLoginsLoginIdPagesWithResponse List a Facebook login's Pages
 	//
-	// Lists every Page this login can manage, with the brand that holds each. assignable reflects ownership only. When facebook_page_selection is true, assigning can still fail on the per-brand Page allowance.
+	// Lists every Page this login can manage, with the brand that holds each. assignable reflects ownership only. When facebook_page_selection is true, assigning can still fail on the per-brand Page allowance. A brand-restricted key does not see Pages held by brands outside its list.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -24185,7 +24193,7 @@ type ClientWithResponsesInterface interface {
 
 	// PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignWithBodyWithResponse Assign a Facebook Page to a brand
 	//
-	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
+	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap. A brand-restricted key can only move Pages held by brands on its list: any other Page returns 400 validation.page_not_granted.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -24194,7 +24202,7 @@ type ClientWithResponsesInterface interface {
 
 	// PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignWithResponse Assign a Facebook Page to a brand
 	//
-	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
+	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap. A brand-restricted key can only move Pages held by brands on its list: any other Page returns 400 validation.page_not_granted.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -24570,6 +24578,8 @@ type ClientWithResponsesInterface interface {
 
 	// PostPlatformsTiktokAccountsIdSyncWithResponse Re-sync a TikTok account's videos
 	//
+	// Starts a sync of the account's videos and returns once it is started. Poll GET /accounts/{id}/sync until state leaves "syncing", then read the posts. Shares the cooldown and the daily sync limit of POST /accounts/{id}/sync.
+	//
 	// Returns a wrapper object for the known response body format(s).
 	//
 	// Corresponds with POST /platforms/tiktok/accounts/{id}/sync (the `PostPlatformsTiktokAccountsIdSync` operationId).
@@ -24781,6 +24791,8 @@ type ClientWithResponsesInterface interface {
 	GetPlatformsYoutubeAccountsIdSummaryWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetPlatformsYoutubeAccountsIdSummaryResponse, error)
 
 	// PostPlatformsYoutubeAccountsIdSyncWithResponse Re-sync a YouTube account's videos
+	//
+	// Starts a sync of the account's videos and returns once it is started. Poll GET /accounts/{id}/sync until state leaves "syncing", then read the posts. Shares the cooldown and the daily sync limit of POST /accounts/{id}/sync.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -28434,6 +28446,10 @@ type GetInboxCommentsPostIdCommentIdRepliesResponse struct {
 	JSON400 *ApiEndpointsErrorResponse
 	// JSON401 the response for an HTTP 401 `application/json` response
 	JSON401 *ApiEndpointsErrorResponse
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *ApiEndpointsErrorResponse
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *ApiEndpointsErrorResponse
 	// JSON501 the response for an HTTP 501 `application/json` response
 	JSON501 *ApiEndpointsErrorResponse
 }
@@ -28451,6 +28467,16 @@ func (r GetInboxCommentsPostIdCommentIdRepliesResponse) GetJSON400() *ApiEndpoin
 // GetJSON401 returns the response for an HTTP 401 `application/json` response
 func (r GetInboxCommentsPostIdCommentIdRepliesResponse) GetJSON401() *ApiEndpointsErrorResponse {
 	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetInboxCommentsPostIdCommentIdRepliesResponse) GetJSON403() *ApiEndpointsErrorResponse {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r GetInboxCommentsPostIdCommentIdRepliesResponse) GetJSON404() *ApiEndpointsErrorResponse {
+	return r.JSON404
 }
 
 // GetJSON501 returns the response for an HTTP 501 `application/json` response
@@ -28542,6 +28568,8 @@ type GetInboxConversationsIdResponse struct {
 	JSON200 *ApiEndpointsConversationResponse
 	// JSON401 the response for an HTTP 401 `application/json` response
 	JSON401 *ApiEndpointsErrorResponse
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *ApiEndpointsErrorResponse
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *ApiEndpointsErrorResponse
 }
@@ -28554,6 +28582,11 @@ func (r GetInboxConversationsIdResponse) GetJSON200() *ApiEndpointsConversationR
 // GetJSON401 returns the response for an HTTP 401 `application/json` response
 func (r GetInboxConversationsIdResponse) GetJSON401() *ApiEndpointsErrorResponse {
 	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetInboxConversationsIdResponse) GetJSON403() *ApiEndpointsErrorResponse {
+	return r.JSON403
 }
 
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
@@ -28599,6 +28632,8 @@ type PatchInboxConversationsIdResponse struct {
 	JSON400 *ApiEndpointsErrorResponse
 	// JSON401 the response for an HTTP 401 `application/json` response
 	JSON401 *ApiEndpointsErrorResponse
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *ApiEndpointsErrorResponse
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *ApiEndpointsErrorResponse
 }
@@ -28616,6 +28651,11 @@ func (r PatchInboxConversationsIdResponse) GetJSON400() *ApiEndpointsErrorRespon
 // GetJSON401 returns the response for an HTTP 401 `application/json` response
 func (r PatchInboxConversationsIdResponse) GetJSON401() *ApiEndpointsErrorResponse {
 	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r PatchInboxConversationsIdResponse) GetJSON403() *ApiEndpointsErrorResponse {
+	return r.JSON403
 }
 
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
@@ -28659,6 +28699,8 @@ type GetInboxConversationsIdMessagesResponse struct {
 	JSON200 *ApiEndpointsMessagesListResponse
 	// JSON401 the response for an HTTP 401 `application/json` response
 	JSON401 *ApiEndpointsErrorResponse
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *ApiEndpointsErrorResponse
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *ApiEndpointsErrorResponse
 }
@@ -28671,6 +28713,11 @@ func (r GetInboxConversationsIdMessagesResponse) GetJSON200() *ApiEndpointsMessa
 // GetJSON401 returns the response for an HTTP 401 `application/json` response
 func (r GetInboxConversationsIdMessagesResponse) GetJSON401() *ApiEndpointsErrorResponse {
 	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetInboxConversationsIdMessagesResponse) GetJSON403() *ApiEndpointsErrorResponse {
+	return r.JSON403
 }
 
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
@@ -28970,6 +29017,8 @@ type PostInboxConversationsIdReadResponse struct {
 	JSON200 *ApiEndpointsSuccessResponse
 	// JSON401 the response for an HTTP 401 `application/json` response
 	JSON401 *ApiEndpointsErrorResponse
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *ApiEndpointsErrorResponse
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *ApiEndpointsErrorResponse
 }
@@ -28982,6 +29031,11 @@ func (r PostInboxConversationsIdReadResponse) GetJSON200() *ApiEndpointsSuccessR
 // GetJSON401 returns the response for an HTTP 401 `application/json` response
 func (r PostInboxConversationsIdReadResponse) GetJSON401() *ApiEndpointsErrorResponse {
 	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r PostInboxConversationsIdReadResponse) GetJSON403() *ApiEndpointsErrorResponse {
+	return r.JSON403
 }
 
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
@@ -33085,8 +33139,12 @@ type PostPlatformsTiktokAccountsIdSyncResponse struct {
 	JSON200 *map[string]bool
 	// JSON401 the response for an HTTP 401 `application/json` response
 	JSON401 *ApiEndpointsErrorResponse
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *ApiEndpointsErrorResponse
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *ApiEndpointsErrorResponse
+	// JSON429 the response for an HTTP 429 `application/json` response
+	JSON429 *ApiEndpointsErrorResponse
 	// JSON501 the response for an HTTP 501 `application/json` response
 	JSON501 *ApiEndpointsErrorResponse
 	// JSON503 the response for an HTTP 503 `application/json` response
@@ -33103,9 +33161,19 @@ func (r PostPlatformsTiktokAccountsIdSyncResponse) GetJSON401() *ApiEndpointsErr
 	return r.JSON401
 }
 
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r PostPlatformsTiktokAccountsIdSyncResponse) GetJSON403() *ApiEndpointsErrorResponse {
+	return r.JSON403
+}
+
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
 func (r PostPlatformsTiktokAccountsIdSyncResponse) GetJSON404() *ApiEndpointsErrorResponse {
 	return r.JSON404
+}
+
+// GetJSON429 returns the response for an HTTP 429 `application/json` response
+func (r PostPlatformsTiktokAccountsIdSyncResponse) GetJSON429() *ApiEndpointsErrorResponse {
+	return r.JSON429
 }
 
 // GetJSON501 returns the response for an HTTP 501 `application/json` response
@@ -34126,8 +34194,12 @@ type PostPlatformsYoutubeAccountsIdSyncResponse struct {
 	JSON200 *map[string]bool
 	// JSON401 the response for an HTTP 401 `application/json` response
 	JSON401 *ApiEndpointsErrorResponse
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *ApiEndpointsErrorResponse
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *ApiEndpointsErrorResponse
+	// JSON429 the response for an HTTP 429 `application/json` response
+	JSON429 *ApiEndpointsErrorResponse
 	// JSON501 the response for an HTTP 501 `application/json` response
 	JSON501 *ApiEndpointsErrorResponse
 	// JSON503 the response for an HTTP 503 `application/json` response
@@ -34144,9 +34216,19 @@ func (r PostPlatformsYoutubeAccountsIdSyncResponse) GetJSON401() *ApiEndpointsEr
 	return r.JSON401
 }
 
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r PostPlatformsYoutubeAccountsIdSyncResponse) GetJSON403() *ApiEndpointsErrorResponse {
+	return r.JSON403
+}
+
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
 func (r PostPlatformsYoutubeAccountsIdSyncResponse) GetJSON404() *ApiEndpointsErrorResponse {
 	return r.JSON404
+}
+
+// GetJSON429 returns the response for an HTTP 429 `application/json` response
+func (r PostPlatformsYoutubeAccountsIdSyncResponse) GetJSON429() *ApiEndpointsErrorResponse {
+	return r.JSON429
 }
 
 // GetJSON501 returns the response for an HTTP 501 `application/json` response
@@ -38242,7 +38324,7 @@ func (c *ClientWithResponses) GetPlatformsFacebookAccountsIdSummaryWithResponse(
 
 // GetPlatformsFacebookLoginsLoginIdPagesWithResponse List a Facebook login's Pages
 //
-// Lists every Page this login can manage, with the brand that holds each. assignable reflects ownership only. When facebook_page_selection is true, assigning can still fail on the per-brand Page allowance.
+// Lists every Page this login can manage, with the brand that holds each. assignable reflects ownership only. When facebook_page_selection is true, assigning can still fail on the per-brand Page allowance. A brand-restricted key does not see Pages held by brands outside its list.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -38257,7 +38339,7 @@ func (c *ClientWithResponses) GetPlatformsFacebookLoginsLoginIdPagesWithResponse
 
 // PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignWithBodyWithResponse Assign a Facebook Page to a brand
 //
-// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
+// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap. A brand-restricted key can only move Pages held by brands on its list: any other Page returns 400 validation.page_not_granted.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -38272,7 +38354,7 @@ func (c *ClientWithResponses) PostPlatformsFacebookLoginsLoginIdPagesPageIdAssig
 
 // PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignWithResponse Assign a Facebook Page to a brand
 //
-// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
+// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap. A brand-restricted key can only move Pages held by brands on its list: any other Page returns 400 validation.page_not_granted.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -38900,6 +38982,8 @@ func (c *ClientWithResponses) GetPlatformsTiktokAccountsIdSummaryWithResponse(ct
 
 // PostPlatformsTiktokAccountsIdSyncWithResponse Re-sync a TikTok account's videos
 //
+// Starts a sync of the account's videos and returns once it is started. Poll GET /accounts/{id}/sync until state leaves "syncing", then read the posts. Shares the cooldown and the daily sync limit of POST /accounts/{id}/sync.
+//
 // Returns a wrapper object for the known response body format(s).
 //
 // Corresponds with POST /platforms/tiktok/accounts/{id}/sync (the `PostPlatformsTiktokAccountsIdSync` operationId).
@@ -39255,6 +39339,8 @@ func (c *ClientWithResponses) GetPlatformsYoutubeAccountsIdSummaryWithResponse(c
 }
 
 // PostPlatformsYoutubeAccountsIdSyncWithResponse Re-sync a YouTube account's videos
+//
+// Starts a sync of the account's videos and returns once it is started. Poll GET /accounts/{id}/sync until state leaves "syncing", then read the posts. Shares the cooldown and the daily sync limit of POST /accounts/{id}/sync.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -42498,6 +42584,20 @@ func ParseGetInboxCommentsPostIdCommentIdRepliesResponse(rsp *http.Response) (*G
 		}
 		response.JSON401 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ApiEndpointsErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ApiEndpointsErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 501:
 		var dest ApiEndpointsErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -42571,6 +42671,13 @@ func ParseGetInboxConversationsIdResponse(rsp *http.Response) (*GetInboxConversa
 		}
 		response.JSON401 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ApiEndpointsErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest ApiEndpointsErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -42618,6 +42725,13 @@ func ParsePatchInboxConversationsIdResponse(rsp *http.Response) (*PatchInboxConv
 		}
 		response.JSON401 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ApiEndpointsErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest ApiEndpointsErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -42657,6 +42771,13 @@ func ParseGetInboxConversationsIdMessagesResponse(rsp *http.Response) (*GetInbox
 			return nil, err
 		}
 		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ApiEndpointsErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest ApiEndpointsErrorResponse
@@ -42908,6 +43029,13 @@ func ParsePostInboxConversationsIdReadResponse(rsp *http.Response) (*PostInboxCo
 			return nil, err
 		}
 		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ApiEndpointsErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest ApiEndpointsErrorResponse
@@ -46070,12 +46198,26 @@ func ParsePostPlatformsTiktokAccountsIdSyncResponse(rsp *http.Response) (*PostPl
 		}
 		response.JSON401 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ApiEndpointsErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest ApiEndpointsErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest ApiEndpointsErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 501:
 		var dest ApiEndpointsErrorResponse
@@ -46892,12 +47034,26 @@ func ParsePostPlatformsYoutubeAccountsIdSyncResponse(rsp *http.Response) (*PostP
 		}
 		response.JSON401 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ApiEndpointsErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest ApiEndpointsErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest ApiEndpointsErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON429 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 501:
 		var dest ApiEndpointsErrorResponse
