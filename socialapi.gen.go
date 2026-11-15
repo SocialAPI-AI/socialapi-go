@@ -4063,7 +4063,7 @@ type ApiEndpointsSendMessageRequest struct {
 	// across up to 10 sections). WhatsApp only; requires text and list_button.
 	ListSections *[]ApiEndpointsMessageListSection `json:"list_sections,omitempty"`
 
-	// MessageTag Optional. Only `HUMAN_AGENT` is accepted, on Instagram accounts connected with Instagram Login, for replies a person types between 24 hours and 7 days after the person's last message. It must not be used by workflows, automations, bots, AI agents acting on their own, broadcasts, promotions or re-engagement. It needs to be enabled for your account by support. Inside 24 hours the message is sent without the tag. Misuse pauses or revokes access and can get the account restricted by Meta.
+	// MessageTag Optional. Only `HUMAN_AGENT` is accepted, on Instagram accounts connected with Instagram Login, for replies a member of your team types between 24 hours and 7 days after the person's last message. Workflows, automations, bots and AI agents acting on their own send without it, so they reply within 24 hours of the person's last message. Ask support to enable it for your account. Inside 24 hours the message is sent without the tag.
 	//
 	// Example: HUMAN_AGENT
 	MessageTag *string `json:"message_tag,omitempty"`
@@ -7310,7 +7310,7 @@ type GetInboxCommentsParams struct {
 	// MinComments Only return posts with at least this many comments (default 0)
 	MinComments *int `form:"min_comments,omitempty" json:"min_comments,omitempty"`
 
-	// Since Only return posts commented after this timestamp (RFC3339)
+	// Since Only return posts published at or after this timestamp (RFC3339)
 	Since *string `form:"since,omitempty" json:"since,omitempty"`
 
 	// SortBy Sort field: date (default)
@@ -7343,7 +7343,7 @@ type GetInboxCommentsPostIdParams struct {
 	// Order Order: recent (default) or relevance. YouTube only; other platforms do not sort by it.
 	Order *string `form:"order,omitempty" json:"order,omitempty"`
 
-	// Q Keyword search across comment text (max 256 chars). YouTube only; other platforms do not filter by it.
+	// Q Keyword search across comment text (max 256 bytes). YouTube only; other platforms do not filter by it.
 	Q *string `form:"q,omitempty" json:"q,omitempty"`
 }
 
@@ -7630,7 +7630,7 @@ type DeletePlatformsWhatsappAccountsIdTemplatesParams struct {
 
 // GetPlatformsWhatsappAccountsIdTemplatesParams defines parameters for GetPlatformsWhatsappAccountsIdTemplates.
 type GetPlatformsWhatsappAccountsIdTemplatesParams struct {
-	// Limit Maximum number of templates to return (1-100)
+	// Limit Maximum number of templates to return. Meta sets the page size and the maximum
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 
 	// Cursor Pagination cursor (after) from a previous response
@@ -8438,7 +8438,7 @@ type ClientInterface interface {
 
 	// GetInboxComments List commented posts
 	//
-	// Returns inbox posts that have comments, ordered by most-recently-commented. Supports filtering by account, platform, minimum comment count, and date range. Uses cursor-based pagination. YouTube commented posts only appear when the request is scoped with account_id (they are absent from the unfiltered aggregate), and that list returns a single page (no cursor).
+	// Returns the connected accounts' posts with their comment counts, newest published first. Add min_comments=1 to keep only posts that have comments. Filter by account, brand, platform, minimum comment count, and publish date. Uses cursor-based pagination.
 	//
 	// Corresponds with GET /inbox/comments (the `GetInboxComments` operationId).
 	GetInboxComments(ctx context.Context, params *GetInboxCommentsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -8502,14 +8502,14 @@ type ClientInterface interface {
 
 	// DeleteInboxCommentsPostIdCommentIdLike Unlike a comment
 	//
-	// Removes a like from a comment on the platform. Supported on Facebook, LinkedIn Pages, and Instagram accounts connected with Facebook Login. Check the can_like capability flag.
+	// Removes a like from a comment on the platform. Supported on Facebook, LinkedIn (company Pages and member profiles), TikTok (default connection), and Instagram accounts connected with Facebook Login. Check the can_like capability flag.
 	//
 	// Corresponds with DELETE /inbox/comments/{postId}/{commentId}/like (the `DeleteInboxCommentsPostIdCommentIdLike` operationId).
 	DeleteInboxCommentsPostIdCommentIdLike(ctx context.Context, postId string, commentId string, params *DeleteInboxCommentsPostIdCommentIdLikeParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostInboxCommentsPostIdCommentIdLikeWithBody Like a comment
 	//
-	// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn Pages, and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
+	// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn (company Pages and member profiles), TikTok (default connection), and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -8518,7 +8518,7 @@ type ClientInterface interface {
 
 	// PostInboxCommentsPostIdCommentIdLike Like a comment
 	//
-	// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn Pages, and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
+	// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn (company Pages and member profiles), TikTok (default connection), and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -8527,7 +8527,7 @@ type ClientInterface interface {
 
 	// PostInboxCommentsPostIdCommentIdPrivateReplyWithBody Send a private reply to a commenter
 	//
-	// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. Once a comment has spent its one reply, or the comment is older than 7 days, further attempts are refused and do not count against your outbound message rate; the error carries a reason of already_replied, platform_refused or window_expired. The 400 is terminal: retrying it will never succeed. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
+	// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. When the comment is already known to be ineligible, the error carries blocked_locally true and a reason of already_replied, platform_refused or window_expired. When blocked_locally is true, or the reply was text only, the 400 is final. When the platform refuses a reply that carried buttons or an attachment, the refusal can come from that content: send it once more as text only. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -8536,7 +8536,7 @@ type ClientInterface interface {
 
 	// PostInboxCommentsPostIdCommentIdPrivateReply Send a private reply to a commenter
 	//
-	// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. Once a comment has spent its one reply, or the comment is older than 7 days, further attempts are refused and do not count against your outbound message rate; the error carries a reason of already_replied, platform_refused or window_expired. The 400 is terminal: retrying it will never succeed. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
+	// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. When the comment is already known to be ineligible, the error carries blocked_locally true and a reason of already_replied, platform_refused or window_expired. When blocked_locally is true, or the reply was text only, the 400 is final. When the platform refuses a reply that carried buttons or an attachment, the refusal can come from that content: send it once more as text only. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -8645,8 +8645,6 @@ type ClientInterface interface {
 	//
 	// Supported on Instagram, Facebook Messenger and WhatsApp. On Instagram and Messenger the typing indicator clears after 20 seconds or when you send a message. On WhatsApp, typing_on also marks the contact's latest message as read, clears after 25 seconds or when you reply, and needs at least one message from the contact. WhatsApp has no typing_off and returns 400. Marking a message seen on WhatsApp also marks every earlier message in the chat as read.
 	//
-	// Instagram and Messenger only accept these actions within 24 hours of the person's last message.
-	//
 	// Takes any type of body and a specified content type.
 	//
 	// Corresponds with POST /inbox/conversations/{id}/sender-action (the `PostInboxConversationsIdSenderAction` operationId).
@@ -8657,8 +8655,6 @@ type ClientInterface interface {
 	// Shows the other participant a typing indicator, or marks their messages as seen, without sending a message. Free: no interaction credit is used.
 	//
 	// Supported on Instagram, Facebook Messenger and WhatsApp. On Instagram and Messenger the typing indicator clears after 20 seconds or when you send a message. On WhatsApp, typing_on also marks the contact's latest message as read, clears after 25 seconds or when you reply, and needs at least one message from the contact. WhatsApp has no typing_off and returns 400. Marking a message seen on WhatsApp also marks every earlier message in the chat as read.
-	//
-	// Instagram and Messenger only accept these actions within 24 hours of the person's last message.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -8953,14 +8949,14 @@ type ClientInterface interface {
 
 	// GetPlatformsFacebookLoginsLoginIdPages List a Facebook login's Pages
 	//
-	// Lists every Page this login can manage, live from Meta, merged with assignment state. Pages granted after the last OAuth exchange appear here without re-authenticating. assignable reflects ownership only; the 5-page-per-brand cap is enforced when assigning.
+	// Lists every Page this login can manage, with the brand that holds each. assignable reflects ownership only. When facebook_page_selection is true, assigning can still fail on the per-brand Page allowance.
 	//
 	// Corresponds with GET /platforms/facebook/logins/{loginId}/pages (the `GetPlatformsFacebookLoginsLoginIdPages` operationId).
 	GetPlatformsFacebookLoginsLoginIdPages(ctx context.Context, loginId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignWithBody Assign a Facebook Page to a brand
 	//
-	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page currently held by another brand of yours is moved to the target brand. Each brand can connect up to 5 Facebook Pages, a hard cap. Assigning beyond that limit is refused.
+	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -8969,7 +8965,7 @@ type ClientInterface interface {
 
 	// PostPlatformsFacebookLoginsLoginIdPagesPageIdAssign Assign a Facebook Page to a brand
 	//
-	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page currently held by another brand of yours is moved to the target brand. Each brand can connect up to 5 Facebook Pages, a hard cap. Assigning beyond that limit is refused.
+	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -9468,7 +9464,7 @@ type ClientInterface interface {
 
 	// PutPlatformsWhatsappTemplatesIdWithBody Edit a message template
 	//
-	// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED templates can be edited, and editing resets the template to PENDING for re-review. APPROVED templates are limited to one edit per day.
+	// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED, REJECTED or PAUSED templates can be edited. Meta reviews the edit again: an edited APPROVED or PAUSED template returns to APPROVED unless it fails review. Meta allows an approved template 1 edit per 24 hours and 10 per 30 days.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -9477,7 +9473,7 @@ type ClientInterface interface {
 
 	// PutPlatformsWhatsappTemplatesId Edit a message template
 	//
-	// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED templates can be edited, and editing resets the template to PENDING for re-review. APPROVED templates are limited to one edit per day.
+	// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED, REJECTED or PAUSED templates can be edited. Meta reviews the edit again: an edited APPROVED or PAUSED template returns to APPROVED unless it fails review. Meta allows an approved template 1 edit per 24 hours and 10 per 30 days.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -10919,7 +10915,7 @@ func (c *Client) PostFeedback(ctx context.Context, body PostFeedbackJSONRequestB
 
 // GetInboxComments List commented posts
 //
-// Returns inbox posts that have comments, ordered by most-recently-commented. Supports filtering by account, platform, minimum comment count, and date range. Uses cursor-based pagination. YouTube commented posts only appear when the request is scoped with account_id (they are absent from the unfiltered aggregate), and that list returns a single page (no cursor).
+// Returns the connected accounts' posts with their comment counts, newest published first. Add min_comments=1 to keep only posts that have comments. Filter by account, brand, platform, minimum comment count, and publish date. Uses cursor-based pagination.
 //
 // Corresponds with GET /inbox/comments (the `GetInboxComments` operationId).
 func (c *Client) GetInboxComments(ctx context.Context, params *GetInboxCommentsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -11063,7 +11059,7 @@ func (c *Client) PostInboxCommentsPostIdCommentIdHide(ctx context.Context, postI
 
 // DeleteInboxCommentsPostIdCommentIdLike Unlike a comment
 //
-// Removes a like from a comment on the platform. Supported on Facebook, LinkedIn Pages, and Instagram accounts connected with Facebook Login. Check the can_like capability flag.
+// Removes a like from a comment on the platform. Supported on Facebook, LinkedIn (company Pages and member profiles), TikTok (default connection), and Instagram accounts connected with Facebook Login. Check the can_like capability flag.
 //
 // Corresponds with DELETE /inbox/comments/{postId}/{commentId}/like (the `DeleteInboxCommentsPostIdCommentIdLike` operationId).
 func (c *Client) DeleteInboxCommentsPostIdCommentIdLike(ctx context.Context, postId string, commentId string, params *DeleteInboxCommentsPostIdCommentIdLikeParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -11080,7 +11076,7 @@ func (c *Client) DeleteInboxCommentsPostIdCommentIdLike(ctx context.Context, pos
 
 // PostInboxCommentsPostIdCommentIdLikeWithBody Like a comment
 //
-// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn Pages, and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
+// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn (company Pages and member profiles), TikTok (default connection), and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
 //
 // Takes any type of body and a specified content type.
 //
@@ -11099,7 +11095,7 @@ func (c *Client) PostInboxCommentsPostIdCommentIdLikeWithBody(ctx context.Contex
 
 // PostInboxCommentsPostIdCommentIdLike Like a comment
 //
-// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn Pages, and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
+// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn (company Pages and member profiles), TikTok (default connection), and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -11118,7 +11114,7 @@ func (c *Client) PostInboxCommentsPostIdCommentIdLike(ctx context.Context, postI
 
 // PostInboxCommentsPostIdCommentIdPrivateReplyWithBody Send a private reply to a commenter
 //
-// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. Once a comment has spent its one reply, or the comment is older than 7 days, further attempts are refused and do not count against your outbound message rate; the error carries a reason of already_replied, platform_refused or window_expired. The 400 is terminal: retrying it will never succeed. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
+// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. When the comment is already known to be ineligible, the error carries blocked_locally true and a reason of already_replied, platform_refused or window_expired. When blocked_locally is true, or the reply was text only, the 400 is final. When the platform refuses a reply that carried buttons or an attachment, the refusal can come from that content: send it once more as text only. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
 //
 // Takes any type of body and a specified content type.
 //
@@ -11137,7 +11133,7 @@ func (c *Client) PostInboxCommentsPostIdCommentIdPrivateReplyWithBody(ctx contex
 
 // PostInboxCommentsPostIdCommentIdPrivateReply Send a private reply to a commenter
 //
-// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. Once a comment has spent its one reply, or the comment is older than 7 days, further attempts are refused and do not count against your outbound message rate; the error carries a reason of already_replied, platform_refused or window_expired. The 400 is terminal: retrying it will never succeed. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
+// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. When the comment is already known to be ineligible, the error carries blocked_locally true and a reason of already_replied, platform_refused or window_expired. When blocked_locally is true, or the reply was text only, the 400 is final. When the platform refuses a reply that carried buttons or an attachment, the refusal can come from that content: send it once more as text only. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -11376,8 +11372,6 @@ func (c *Client) PostInboxConversationsIdRead(ctx context.Context, id string, re
 //
 // Supported on Instagram, Facebook Messenger and WhatsApp. On Instagram and Messenger the typing indicator clears after 20 seconds or when you send a message. On WhatsApp, typing_on also marks the contact's latest message as read, clears after 25 seconds or when you reply, and needs at least one message from the contact. WhatsApp has no typing_off and returns 400. Marking a message seen on WhatsApp also marks every earlier message in the chat as read.
 //
-// Instagram and Messenger only accept these actions within 24 hours of the person's last message.
-//
 // Takes any type of body and a specified content type.
 //
 // Corresponds with POST /inbox/conversations/{id}/sender-action (the `PostInboxConversationsIdSenderAction` operationId).
@@ -11398,8 +11392,6 @@ func (c *Client) PostInboxConversationsIdSenderActionWithBody(ctx context.Contex
 // Shows the other participant a typing indicator, or marks their messages as seen, without sending a message. Free: no interaction credit is used.
 //
 // Supported on Instagram, Facebook Messenger and WhatsApp. On Instagram and Messenger the typing indicator clears after 20 seconds or when you send a message. On WhatsApp, typing_on also marks the contact's latest message as read, clears after 25 seconds or when you reply, and needs at least one message from the contact. WhatsApp has no typing_off and returns 400. Marking a message seen on WhatsApp also marks every earlier message in the chat as read.
-//
-// Instagram and Messenger only accept these actions within 24 hours of the person's last message.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -12054,7 +12046,7 @@ func (c *Client) GetPlatformsFacebookAccountsIdSummary(ctx context.Context, id s
 
 // GetPlatformsFacebookLoginsLoginIdPages List a Facebook login's Pages
 //
-// Lists every Page this login can manage, live from Meta, merged with assignment state. Pages granted after the last OAuth exchange appear here without re-authenticating. assignable reflects ownership only; the 5-page-per-brand cap is enforced when assigning.
+// Lists every Page this login can manage, with the brand that holds each. assignable reflects ownership only. When facebook_page_selection is true, assigning can still fail on the per-brand Page allowance.
 //
 // Corresponds with GET /platforms/facebook/logins/{loginId}/pages (the `GetPlatformsFacebookLoginsLoginIdPages` operationId).
 func (c *Client) GetPlatformsFacebookLoginsLoginIdPages(ctx context.Context, loginId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -12071,7 +12063,7 @@ func (c *Client) GetPlatformsFacebookLoginsLoginIdPages(ctx context.Context, log
 
 // PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignWithBody Assign a Facebook Page to a brand
 //
-// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page currently held by another brand of yours is moved to the target brand. Each brand can connect up to 5 Facebook Pages, a hard cap. Assigning beyond that limit is refused.
+// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
 //
 // Takes any type of body and a specified content type.
 //
@@ -12090,7 +12082,7 @@ func (c *Client) PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignWithBody(ctx
 
 // PostPlatformsFacebookLoginsLoginIdPagesPageIdAssign Assign a Facebook Page to a brand
 //
-// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page currently held by another brand of yours is moved to the target brand. Each brand can connect up to 5 Facebook Pages, a hard cap. Assigning beyond that limit is refused.
+// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -13219,7 +13211,7 @@ func (c *Client) GetPlatformsWhatsappTemplatesId(ctx context.Context, id string,
 
 // PutPlatformsWhatsappTemplatesIdWithBody Edit a message template
 //
-// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED templates can be edited, and editing resets the template to PENDING for re-review. APPROVED templates are limited to one edit per day.
+// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED, REJECTED or PAUSED templates can be edited. Meta reviews the edit again: an edited APPROVED or PAUSED template returns to APPROVED unless it fails review. Meta allows an approved template 1 edit per 24 hours and 10 per 30 days.
 //
 // Takes any type of body and a specified content type.
 //
@@ -13238,7 +13230,7 @@ func (c *Client) PutPlatformsWhatsappTemplatesIdWithBody(ctx context.Context, id
 
 // PutPlatformsWhatsappTemplatesId Edit a message template
 //
-// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED templates can be edited, and editing resets the template to PENDING for re-review. APPROVED templates are limited to one edit per day.
+// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED, REJECTED or PAUSED templates can be edited. Meta reviews the edit again: an edited APPROVED or PAUSED template returns to APPROVED unless it fails review. Meta allows an approved template 1 edit per 24 hours and 10 per 30 days.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -23611,7 +23603,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetInboxCommentsWithResponse List commented posts
 	//
-	// Returns inbox posts that have comments, ordered by most-recently-commented. Supports filtering by account, platform, minimum comment count, and date range. Uses cursor-based pagination. YouTube commented posts only appear when the request is scoped with account_id (they are absent from the unfiltered aggregate), and that list returns a single page (no cursor).
+	// Returns the connected accounts' posts with their comment counts, newest published first. Add min_comments=1 to keep only posts that have comments. Filter by account, brand, platform, minimum comment count, and publish date. Uses cursor-based pagination.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -23683,7 +23675,7 @@ type ClientWithResponsesInterface interface {
 
 	// DeleteInboxCommentsPostIdCommentIdLikeWithResponse Unlike a comment
 	//
-	// Removes a like from a comment on the platform. Supported on Facebook, LinkedIn Pages, and Instagram accounts connected with Facebook Login. Check the can_like capability flag.
+	// Removes a like from a comment on the platform. Supported on Facebook, LinkedIn (company Pages and member profiles), TikTok (default connection), and Instagram accounts connected with Facebook Login. Check the can_like capability flag.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -23692,7 +23684,7 @@ type ClientWithResponsesInterface interface {
 
 	// PostInboxCommentsPostIdCommentIdLikeWithBodyWithResponse Like a comment
 	//
-	// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn Pages, and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
+	// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn (company Pages and member profiles), TikTok (default connection), and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -23701,7 +23693,7 @@ type ClientWithResponsesInterface interface {
 
 	// PostInboxCommentsPostIdCommentIdLikeWithResponse Like a comment
 	//
-	// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn Pages, and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
+	// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn (company Pages and member profiles), TikTok (default connection), and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -23710,7 +23702,7 @@ type ClientWithResponsesInterface interface {
 
 	// PostInboxCommentsPostIdCommentIdPrivateReplyWithBodyWithResponse Send a private reply to a commenter
 	//
-	// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. Once a comment has spent its one reply, or the comment is older than 7 days, further attempts are refused and do not count against your outbound message rate; the error carries a reason of already_replied, platform_refused or window_expired. The 400 is terminal: retrying it will never succeed. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
+	// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. When the comment is already known to be ineligible, the error carries blocked_locally true and a reason of already_replied, platform_refused or window_expired. When blocked_locally is true, or the reply was text only, the 400 is final. When the platform refuses a reply that carried buttons or an attachment, the refusal can come from that content: send it once more as text only. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -23719,7 +23711,7 @@ type ClientWithResponsesInterface interface {
 
 	// PostInboxCommentsPostIdCommentIdPrivateReplyWithResponse Send a private reply to a commenter
 	//
-	// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. Once a comment has spent its one reply, or the comment is older than 7 days, further attempts are refused and do not count against your outbound message rate; the error carries a reason of already_replied, platform_refused or window_expired. The 400 is terminal: retrying it will never succeed. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
+	// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. When the comment is already known to be ineligible, the error carries blocked_locally true and a reason of already_replied, platform_refused or window_expired. When blocked_locally is true, or the reply was text only, the 400 is final. When the platform refuses a reply that carried buttons or an attachment, the refusal can come from that content: send it once more as text only. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -23840,8 +23832,6 @@ type ClientWithResponsesInterface interface {
 	//
 	// Supported on Instagram, Facebook Messenger and WhatsApp. On Instagram and Messenger the typing indicator clears after 20 seconds or when you send a message. On WhatsApp, typing_on also marks the contact's latest message as read, clears after 25 seconds or when you reply, and needs at least one message from the contact. WhatsApp has no typing_off and returns 400. Marking a message seen on WhatsApp also marks every earlier message in the chat as read.
 	//
-	// Instagram and Messenger only accept these actions within 24 hours of the person's last message.
-	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
 	// Corresponds with POST /inbox/conversations/{id}/sender-action (the `PostInboxConversationsIdSenderAction` operationId).
@@ -23852,8 +23842,6 @@ type ClientWithResponsesInterface interface {
 	// Shows the other participant a typing indicator, or marks their messages as seen, without sending a message. Free: no interaction credit is used.
 	//
 	// Supported on Instagram, Facebook Messenger and WhatsApp. On Instagram and Messenger the typing indicator clears after 20 seconds or when you send a message. On WhatsApp, typing_on also marks the contact's latest message as read, clears after 25 seconds or when you reply, and needs at least one message from the contact. WhatsApp has no typing_off and returns 400. Marking a message seen on WhatsApp also marks every earlier message in the chat as read.
-	//
-	// Instagram and Messenger only accept these actions within 24 hours of the person's last message.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -24188,7 +24176,7 @@ type ClientWithResponsesInterface interface {
 
 	// GetPlatformsFacebookLoginsLoginIdPagesWithResponse List a Facebook login's Pages
 	//
-	// Lists every Page this login can manage, live from Meta, merged with assignment state. Pages granted after the last OAuth exchange appear here without re-authenticating. assignable reflects ownership only; the 5-page-per-brand cap is enforced when assigning.
+	// Lists every Page this login can manage, with the brand that holds each. assignable reflects ownership only. When facebook_page_selection is true, assigning can still fail on the per-brand Page allowance.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -24197,7 +24185,7 @@ type ClientWithResponsesInterface interface {
 
 	// PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignWithBodyWithResponse Assign a Facebook Page to a brand
 	//
-	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page currently held by another brand of yours is moved to the target brand. Each brand can connect up to 5 Facebook Pages, a hard cap. Assigning beyond that limit is refused.
+	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -24206,7 +24194,7 @@ type ClientWithResponsesInterface interface {
 
 	// PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignWithResponse Assign a Facebook Page to a brand
 	//
-	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page currently held by another brand of yours is moved to the target brand. Each brand can connect up to 5 Facebook Pages, a hard cap. Assigning beyond that limit is refused.
+	// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -24769,7 +24757,7 @@ type ClientWithResponsesInterface interface {
 
 	// PutPlatformsWhatsappTemplatesIdWithBodyWithResponse Edit a message template
 	//
-	// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED templates can be edited, and editing resets the template to PENDING for re-review. APPROVED templates are limited to one edit per day.
+	// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED, REJECTED or PAUSED templates can be edited. Meta reviews the edit again: an edited APPROVED or PAUSED template returns to APPROVED unless it fails review. Meta allows an approved template 1 edit per 24 hours and 10 per 30 days.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -24778,7 +24766,7 @@ type ClientWithResponsesInterface interface {
 
 	// PutPlatformsWhatsappTemplatesIdWithResponse Edit a message template
 	//
-	// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED templates can be edited, and editing resets the template to PENDING for re-review. APPROVED templates are limited to one edit per day.
+	// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED, REJECTED or PAUSED templates can be edited. Meta reviews the edit again: an edited APPROVED or PAUSED template returns to APPROVED unless it fails review. Meta allows an approved template 1 edit per 24 hours and 10 per 30 days.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -30759,6 +30747,8 @@ type GetPlatformsFacebookLoginsLoginIdPagesResponse struct {
 	JSON200 *ApiEndpointsFacebookLoginPagesResponse
 	// JSON401 the response for an HTTP 401 `application/json` response
 	JSON401 *ApiEndpointsErrorResponse
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *ApiEndpointsErrorResponse
 	// JSON404 the response for an HTTP 404 `application/json` response
 	JSON404 *ApiEndpointsErrorResponse
 }
@@ -30771,6 +30761,11 @@ func (r GetPlatformsFacebookLoginsLoginIdPagesResponse) GetJSON200() *ApiEndpoin
 // GetJSON401 returns the response for an HTTP 401 `application/json` response
 func (r GetPlatformsFacebookLoginsLoginIdPagesResponse) GetJSON401() *ApiEndpointsErrorResponse {
 	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetPlatformsFacebookLoginsLoginIdPagesResponse) GetJSON403() *ApiEndpointsErrorResponse {
+	return r.JSON403
 }
 
 // GetJSON404 returns the response for an HTTP 404 `application/json` response
@@ -30812,6 +30807,8 @@ type PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignResponse struct {
 	HTTPResponse *http.Response
 	// JSON201 the response for an HTTP 201 `application/json` response
 	JSON201 *ApiEndpointsAssignPageResponse
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *ApiEndpointsErrorResponse
 	// JSON403 the response for an HTTP 403 `application/json` response
 	JSON403 *ApiEndpointsErrorResponse
 	// JSON404 the response for an HTTP 404 `application/json` response
@@ -30823,6 +30820,11 @@ type PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignResponse struct {
 // GetJSON201 returns the response for an HTTP 201 `application/json` response
 func (r PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignResponse) GetJSON201() *ApiEndpointsAssignPageResponse {
 	return r.JSON201
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignResponse) GetJSON400() *ApiEndpointsErrorResponse {
+	return r.JSON400
 }
 
 // GetJSON403 returns the response for an HTTP 403 `application/json` response
@@ -37295,7 +37297,7 @@ func (c *ClientWithResponses) PostFeedbackWithResponse(ctx context.Context, body
 
 // GetInboxCommentsWithResponse List commented posts
 //
-// Returns inbox posts that have comments, ordered by most-recently-commented. Supports filtering by account, platform, minimum comment count, and date range. Uses cursor-based pagination. YouTube commented posts only appear when the request is scoped with account_id (they are absent from the unfiltered aggregate), and that list returns a single page (no cursor).
+// Returns the connected accounts' posts with their comment counts, newest published first. Add min_comments=1 to keep only posts that have comments. Filter by account, brand, platform, minimum comment count, and publish date. Uses cursor-based pagination.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -37415,7 +37417,7 @@ func (c *ClientWithResponses) PostInboxCommentsPostIdCommentIdHideWithResponse(c
 
 // DeleteInboxCommentsPostIdCommentIdLikeWithResponse Unlike a comment
 //
-// Removes a like from a comment on the platform. Supported on Facebook, LinkedIn Pages, and Instagram accounts connected with Facebook Login. Check the can_like capability flag.
+// Removes a like from a comment on the platform. Supported on Facebook, LinkedIn (company Pages and member profiles), TikTok (default connection), and Instagram accounts connected with Facebook Login. Check the can_like capability flag.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -37430,7 +37432,7 @@ func (c *ClientWithResponses) DeleteInboxCommentsPostIdCommentIdLikeWithResponse
 
 // PostInboxCommentsPostIdCommentIdLikeWithBodyWithResponse Like a comment
 //
-// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn Pages, and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
+// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn (company Pages and member profiles), TikTok (default connection), and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -37445,7 +37447,7 @@ func (c *ClientWithResponses) PostInboxCommentsPostIdCommentIdLikeWithBodyWithRe
 
 // PostInboxCommentsPostIdCommentIdLikeWithResponse Like a comment
 //
-// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn Pages, and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
+// Likes a comment on the platform as the connected account. Supported on Facebook, LinkedIn (company Pages and member profiles), TikTok (default connection), and Instagram accounts connected with Facebook Login. Instagram accounts connected with Instagram Login cannot like comments. Check the can_like capability flag.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -37460,7 +37462,7 @@ func (c *ClientWithResponses) PostInboxCommentsPostIdCommentIdLikeWithResponse(c
 
 // PostInboxCommentsPostIdCommentIdPrivateReplyWithBodyWithResponse Send a private reply to a commenter
 //
-// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. Once a comment has spent its one reply, or the comment is older than 7 days, further attempts are refused and do not count against your outbound message rate; the error carries a reason of already_replied, platform_refused or window_expired. The 400 is terminal: retrying it will never succeed. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
+// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. When the comment is already known to be ineligible, the error carries blocked_locally true and a reason of already_replied, platform_refused or window_expired. When blocked_locally is true, or the reply was text only, the 400 is final. When the platform refuses a reply that carried buttons or an attachment, the refusal can come from that content: send it once more as text only. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -37475,7 +37477,7 @@ func (c *ClientWithResponses) PostInboxCommentsPostIdCommentIdPrivateReplyWithBo
 
 // PostInboxCommentsPostIdCommentIdPrivateReplyWithResponse Send a private reply to a commenter
 //
-// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. Once a comment has spent its one reply, or the comment is older than 7 days, further attempts are refused and do not count against your outbound message rate; the error carries a reason of already_replied, platform_refused or window_expired. The 400 is terminal: retrying it will never succeed. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
+// Sends a direct message to the author of a comment. Only supported on Instagram and Facebook. Meta allows one private reply per comment, within 7 days of the comment; a second attempt or an expired window returns HTTP 400 with error code platform.instagram.private_reply_ineligible or platform.facebook.private_reply_ineligible. When the comment is already known to be ineligible, the error carries blocked_locally true and a reason of already_replied, platform_refused or window_expired. When blocked_locally is true, or the reply was text only, the 400 is final. When the platform refuses a reply that carried buttons or an attachment, the refusal can come from that content: send it once more as text only. Set buttons (1 to 3) to send the reply as a button template with text as its body; a tap on a postback button arrives as a dm.postback event. Set attachment instead of text to send one image, video, audio or file: a private reply is a single message, so it carries either text (with optional buttons) or one attachment, never both. You cannot message the commenter again until they respond; once they do, the conversation continues within the standard 24-hour messaging window. Check the can_private_reply capability flag.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -37674,8 +37676,6 @@ func (c *ClientWithResponses) PostInboxConversationsIdReadWithResponse(ctx conte
 //
 // Supported on Instagram, Facebook Messenger and WhatsApp. On Instagram and Messenger the typing indicator clears after 20 seconds or when you send a message. On WhatsApp, typing_on also marks the contact's latest message as read, clears after 25 seconds or when you reply, and needs at least one message from the contact. WhatsApp has no typing_off and returns 400. Marking a message seen on WhatsApp also marks every earlier message in the chat as read.
 //
-// Instagram and Messenger only accept these actions within 24 hours of the person's last message.
-//
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
 // Corresponds with POST /inbox/conversations/{id}/sender-action (the `PostInboxConversationsIdSenderAction` operationId).
@@ -37692,8 +37692,6 @@ func (c *ClientWithResponses) PostInboxConversationsIdSenderActionWithBodyWithRe
 // Shows the other participant a typing indicator, or marks their messages as seen, without sending a message. Free: no interaction credit is used.
 //
 // Supported on Instagram, Facebook Messenger and WhatsApp. On Instagram and Messenger the typing indicator clears after 20 seconds or when you send a message. On WhatsApp, typing_on also marks the contact's latest message as read, clears after 25 seconds or when you reply, and needs at least one message from the contact. WhatsApp has no typing_off and returns 400. Marking a message seen on WhatsApp also marks every earlier message in the chat as read.
-//
-// Instagram and Messenger only accept these actions within 24 hours of the person's last message.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -38244,7 +38242,7 @@ func (c *ClientWithResponses) GetPlatformsFacebookAccountsIdSummaryWithResponse(
 
 // GetPlatformsFacebookLoginsLoginIdPagesWithResponse List a Facebook login's Pages
 //
-// Lists every Page this login can manage, live from Meta, merged with assignment state. Pages granted after the last OAuth exchange appear here without re-authenticating. assignable reflects ownership only; the 5-page-per-brand cap is enforced when assigning.
+// Lists every Page this login can manage, with the brand that holds each. assignable reflects ownership only. When facebook_page_selection is true, assigning can still fail on the per-brand Page allowance.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -38259,7 +38257,7 @@ func (c *ClientWithResponses) GetPlatformsFacebookLoginsLoginIdPagesWithResponse
 
 // PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignWithBodyWithResponse Assign a Facebook Page to a brand
 //
-// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page currently held by another brand of yours is moved to the target brand. Each brand can connect up to 5 Facebook Pages, a hard cap. Assigning beyond that limit is refused.
+// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -38274,7 +38272,7 @@ func (c *ClientWithResponses) PostPlatformsFacebookLoginsLoginIdPagesPageIdAssig
 
 // PostPlatformsFacebookLoginsLoginIdPagesPageIdAssignWithResponse Assign a Facebook Page to a brand
 //
-// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page currently held by another brand of yours is moved to the target brand. Each brand can connect up to 5 Facebook Pages, a hard cap. Assigning beyond that limit is refused.
+// Assigns one Page from this login to the given brand. Each Page belongs to exactly one brand, so a Page another of your brands holds moves to the target brand. When facebook_page_selection is true, assigning beyond your plan's Facebook Pages per brand returns 403 platform.facebook.page_cap.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -39215,7 +39213,7 @@ func (c *ClientWithResponses) GetPlatformsWhatsappTemplatesIdWithResponse(ctx co
 
 // PutPlatformsWhatsappTemplatesIdWithBodyWithResponse Edit a message template
 //
-// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED templates can be edited, and editing resets the template to PENDING for re-review. APPROVED templates are limited to one edit per day.
+// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED, REJECTED or PAUSED templates can be edited. Meta reviews the edit again: an edited APPROVED or PAUSED template returns to APPROVED unless it fails review. Meta allows an approved template 1 edit per 24 hours and 10 per 30 days.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -39230,7 +39228,7 @@ func (c *ClientWithResponses) PutPlatformsWhatsappTemplatesIdWithBodyWithRespons
 
 // PutPlatformsWhatsappTemplatesIdWithResponse Edit a message template
 //
-// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED templates can be edited, and editing resets the template to PENDING for re-review. APPROVED templates are limited to one edit per day.
+// Updates the components of an existing message template by its WhatsApp template ID. Only APPROVED, REJECTED or PAUSED templates can be edited. Meta reviews the edit again: an edited APPROVED or PAUSED template returns to APPROVED unless it fails review. Meta allows an approved template 1 edit per 24 hours and 10 per 30 days.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -44253,6 +44251,13 @@ func ParseGetPlatformsFacebookLoginsLoginIdPagesResponse(rsp *http.Response) (*G
 		}
 		response.JSON401 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ApiEndpointsErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest ApiEndpointsErrorResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -44285,6 +44290,13 @@ func ParsePostPlatformsFacebookLoginsLoginIdPagesPageIdAssignResponse(rsp *http.
 			return nil, err
 		}
 		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ApiEndpointsErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
 		var dest ApiEndpointsErrorResponse
