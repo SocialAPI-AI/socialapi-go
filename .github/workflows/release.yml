@@ -48,7 +48,9 @@ jobs:
 
       - name: Next version
         id: version
-        run: echo "version=$(bash scripts/next-version.sh "$FIRST_VERSION" '*.go' go.mod go.sum)" >> "$GITHUB_OUTPUT"
+        run: |
+          version=$(bash scripts/next-version.sh "$FIRST_VERSION" '*.go' go.mod go.sum) # an assignment, so a script error fails the step
+          echo "version=$version" >> "$GITHUB_OUTPUT"
 
       # With PUBLISH off nothing is tagged, since a Go tag is itself a release.
       - name: Commit, tag and release
