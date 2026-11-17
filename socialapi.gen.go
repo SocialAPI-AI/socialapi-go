@@ -4335,13 +4335,13 @@ type Post struct {
 	// Caption [always] Post text body; may be empty for media-only posts
 	Caption string `json:"caption"`
 
-	// CommentsCount [platform: instagram, facebook, tiktok] Zero on other platforms
+	// CommentsCount [platform: instagram, facebook, tiktok, linkedin] Zero on other platforms
 	CommentsCount int `json:"comments_count"`
 
 	// Id [always] Platform-native post/video/media ID
 	Id string `json:"id"`
 
-	// LikeCount [platform: instagram, facebook, tiktok] Zero on other platforms
+	// LikeCount [platform: instagram, facebook, tiktok, linkedin] Zero on other platforms
 	LikeCount int `json:"like_count"`
 
 	// MediaType [platform: instagram, facebook, threads, tiktok, youtube] Empty on linkedin and google
@@ -4365,7 +4365,7 @@ type Post struct {
 	// Settings [platform: instagram, facebook] Settings the platform reports for the post
 	Settings *PostSettings `json:"settings,omitempty"`
 
-	// SharesCount [platform: facebook] Zero on other platforms
+	// SharesCount [platform: facebook, linkedin] Zero on other platforms
 	SharesCount int `json:"shares_count"`
 
 	// Timestamp [always]
