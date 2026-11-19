@@ -5597,6 +5597,59 @@ type UpdatePostRequest struct {
 	Visibility *PostVisibility `json:"visibility,omitempty"`
 }
 
+// UpdatePostResponse defines model for UpdatePostResponse.
+type UpdatePostResponse struct {
+	// CreatedAt Example: 2026-03-14T09:00:00Z
+	CreatedAt time.Time `json:"created_at"`
+
+	// Hidden Example: false
+	Hidden bool `json:"hidden"`
+
+	// Id Example: p_01HZ9X3Q4R5M6N7P8V2K0W1J
+	Id    string        `json:"id"`
+	Media *[]MediaInput `json:"media,omitempty"`
+
+	// MediaIds Deprecated: use media.
+	MediaIds *[]string `json:"media_ids,omitempty"`
+
+	// NotUpdatedAccountIds Accounts whose live post kept its published text because the platform does not allow editing it, for example Instagram captions or Facebook Reels. Absent when every live target was edited.
+	//
+	// Example: ["acc_01HZ9X3Q4R5M6N7P8V2K0W1J"]
+	NotUpdatedAccountIds *[]string `json:"not_updated_account_ids,omitempty"`
+
+	// PublishedAt Example: 2026-04-01T10:00:05Z
+	PublishedAt *time.Time `json:"published_at,omitempty"`
+
+	// QueueId ID of the Queue the post is in. null when the post is not queued.
+	//
+	// Example: que_01J9Z8Y7X6W5V4T3S2R1Q0P9N8
+	QueueId *string `json:"queue_id"`
+
+	// RetryCount Example: 0
+	RetryCount int `json:"retry_count"`
+
+	// ScheduledAt Example: 2026-04-01T10:00:00Z
+	ScheduledAt *time.Time `json:"scheduled_at,omitempty"`
+
+	// Status Example: published
+	Status  PostStatus            `json:"status"`
+	Targets *[]PostTargetResponse `json:"targets,omitempty"`
+
+	// Text Example: Check out our new product launch!
+	Text *string `json:"text"`
+
+	// Title Example: Exciting News
+	Title *string `json:"title,omitempty"`
+
+	// UpdatedAt Example: 2026-03-14T09:00:00Z
+	UpdatedAt time.Time `json:"updated_at"`
+
+	// Visibility Who can see the post, as set when it was created or last updated: public, private, connections_only or logged_in.
+	//
+	// Example: public
+	Visibility *string `json:"visibility,omitempty"`
+}
+
 // UpdateQueueParams defines model for UpdateQueueParams.
 type UpdateQueueParams struct {
 	// Active False pauses the Queue, true resumes it.
@@ -8816,8 +8869,9 @@ type ClientInterface interface {
 	//
 	// Updates the text, media, schedule time, targets, or hidden status of a pending post.
 	// Posts in `draft`, `scheduled`, or `failed` status accept every field. Updating a failed post does not republish it: call `POST /posts/{post_id}/retry` afterwards.
-	// A `published` or `partial` post can be edited only when it is live on Google Business Profile alone. Send `text`, `platform_data.google.callToAction`, or both: any other field returns `400 validation.field_not_editable`. A post also live on another platform returns `409 post.state_invalid`.
-	// When the post is live on several Google locations and only some accept the edit, the response is the error from the first location that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
+	// A `published` or `partial` post accepts `text`, plus `platform_data.google.callToAction` when it is live on Google Business Profile. Any other field returns `400 validation.field_not_editable`.
+	// The new text is applied in place on Google Business Profile and on Facebook Page text, photo and album posts, keeping their likes and comments. Instagram does not allow editing a caption after publishing, and Facebook videos, Reels and stories cannot be edited either: those targets keep their published text, and their accounts are listed in `not_updated_account_ids`. A post live only on such targets returns `409 post.state_invalid`.
+	// When only some live targets accept the edit, the response is the error from the first one that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
 	// `queue_id` moves the post to another Queue, and `queue_id: null` takes it out of its Queue and keeps its time.
 	// Omit `targets` to keep the current ones. Sending `targets` replaces them all.
 	// `scheduled_at` must be in the future, and a scheduled post must keep at least one target.
@@ -8831,8 +8885,9 @@ type ClientInterface interface {
 	//
 	// Updates the text, media, schedule time, targets, or hidden status of a pending post.
 	// Posts in `draft`, `scheduled`, or `failed` status accept every field. Updating a failed post does not republish it: call `POST /posts/{post_id}/retry` afterwards.
-	// A `published` or `partial` post can be edited only when it is live on Google Business Profile alone. Send `text`, `platform_data.google.callToAction`, or both: any other field returns `400 validation.field_not_editable`. A post also live on another platform returns `409 post.state_invalid`.
-	// When the post is live on several Google locations and only some accept the edit, the response is the error from the first location that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
+	// A `published` or `partial` post accepts `text`, plus `platform_data.google.callToAction` when it is live on Google Business Profile. Any other field returns `400 validation.field_not_editable`.
+	// The new text is applied in place on Google Business Profile and on Facebook Page text, photo and album posts, keeping their likes and comments. Instagram does not allow editing a caption after publishing, and Facebook videos, Reels and stories cannot be edited either: those targets keep their published text, and their accounts are listed in `not_updated_account_ids`. A post live only on such targets returns `409 post.state_invalid`.
+	// When only some live targets accept the edit, the response is the error from the first one that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
 	// `queue_id` moves the post to another Queue, and `queue_id: null` takes it out of its Queue and keeps its time.
 	// Omit `targets` to keep the current ones. Sending `targets` replaces them all.
 	// `scheduled_at` must be in the future, and a scheduled post must keep at least one target.
@@ -12652,8 +12707,9 @@ func (c *Client) GetPost(ctx context.Context, postId string, reqEditors ...Reque
 //
 // Updates the text, media, schedule time, targets, or hidden status of a pending post.
 // Posts in `draft`, `scheduled`, or `failed` status accept every field. Updating a failed post does not republish it: call `POST /posts/{post_id}/retry` afterwards.
-// A `published` or `partial` post can be edited only when it is live on Google Business Profile alone. Send `text`, `platform_data.google.callToAction`, or both: any other field returns `400 validation.field_not_editable`. A post also live on another platform returns `409 post.state_invalid`.
-// When the post is live on several Google locations and only some accept the edit, the response is the error from the first location that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
+// A `published` or `partial` post accepts `text`, plus `platform_data.google.callToAction` when it is live on Google Business Profile. Any other field returns `400 validation.field_not_editable`.
+// The new text is applied in place on Google Business Profile and on Facebook Page text, photo and album posts, keeping their likes and comments. Instagram does not allow editing a caption after publishing, and Facebook videos, Reels and stories cannot be edited either: those targets keep their published text, and their accounts are listed in `not_updated_account_ids`. A post live only on such targets returns `409 post.state_invalid`.
+// When only some live targets accept the edit, the response is the error from the first one that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
 // `queue_id` moves the post to another Queue, and `queue_id: null` takes it out of its Queue and keeps its time.
 // Omit `targets` to keep the current ones. Sending `targets` replaces them all.
 // `scheduled_at` must be in the future, and a scheduled post must keep at least one target.
@@ -12677,8 +12733,9 @@ func (c *Client) UpdatePostWithBody(ctx context.Context, postId string, contentT
 //
 // Updates the text, media, schedule time, targets, or hidden status of a pending post.
 // Posts in `draft`, `scheduled`, or `failed` status accept every field. Updating a failed post does not republish it: call `POST /posts/{post_id}/retry` afterwards.
-// A `published` or `partial` post can be edited only when it is live on Google Business Profile alone. Send `text`, `platform_data.google.callToAction`, or both: any other field returns `400 validation.field_not_editable`. A post also live on another platform returns `409 post.state_invalid`.
-// When the post is live on several Google locations and only some accept the edit, the response is the error from the first location that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
+// A `published` or `partial` post accepts `text`, plus `platform_data.google.callToAction` when it is live on Google Business Profile. Any other field returns `400 validation.field_not_editable`.
+// The new text is applied in place on Google Business Profile and on Facebook Page text, photo and album posts, keeping their likes and comments. Instagram does not allow editing a caption after publishing, and Facebook videos, Reels and stories cannot be edited either: those targets keep their published text, and their accounts are listed in `not_updated_account_ids`. A post live only on such targets returns `409 post.state_invalid`.
+// When only some live targets accept the edit, the response is the error from the first one that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
 // `queue_id` moves the post to another Queue, and `queue_id: null` takes it out of its Queue and keeps its time.
 // Omit `targets` to keep the current ones. Sending `targets` replaces them all.
 // `scheduled_at` must be in the future, and a scheduled post must keep at least one target.
@@ -23754,8 +23811,9 @@ type ClientWithResponsesInterface interface {
 	//
 	// Updates the text, media, schedule time, targets, or hidden status of a pending post.
 	// Posts in `draft`, `scheduled`, or `failed` status accept every field. Updating a failed post does not republish it: call `POST /posts/{post_id}/retry` afterwards.
-	// A `published` or `partial` post can be edited only when it is live on Google Business Profile alone. Send `text`, `platform_data.google.callToAction`, or both: any other field returns `400 validation.field_not_editable`. A post also live on another platform returns `409 post.state_invalid`.
-	// When the post is live on several Google locations and only some accept the edit, the response is the error from the first location that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
+	// A `published` or `partial` post accepts `text`, plus `platform_data.google.callToAction` when it is live on Google Business Profile. Any other field returns `400 validation.field_not_editable`.
+	// The new text is applied in place on Google Business Profile and on Facebook Page text, photo and album posts, keeping their likes and comments. Instagram does not allow editing a caption after publishing, and Facebook videos, Reels and stories cannot be edited either: those targets keep their published text, and their accounts are listed in `not_updated_account_ids`. A post live only on such targets returns `409 post.state_invalid`.
+	// When only some live targets accept the edit, the response is the error from the first one that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
 	// `queue_id` moves the post to another Queue, and `queue_id: null` takes it out of its Queue and keeps its time.
 	// Omit `targets` to keep the current ones. Sending `targets` replaces them all.
 	// `scheduled_at` must be in the future, and a scheduled post must keep at least one target.
@@ -23769,8 +23827,9 @@ type ClientWithResponsesInterface interface {
 	//
 	// Updates the text, media, schedule time, targets, or hidden status of a pending post.
 	// Posts in `draft`, `scheduled`, or `failed` status accept every field. Updating a failed post does not republish it: call `POST /posts/{post_id}/retry` afterwards.
-	// A `published` or `partial` post can be edited only when it is live on Google Business Profile alone. Send `text`, `platform_data.google.callToAction`, or both: any other field returns `400 validation.field_not_editable`. A post also live on another platform returns `409 post.state_invalid`.
-	// When the post is live on several Google locations and only some accept the edit, the response is the error from the first location that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
+	// A `published` or `partial` post accepts `text`, plus `platform_data.google.callToAction` when it is live on Google Business Profile. Any other field returns `400 validation.field_not_editable`.
+	// The new text is applied in place on Google Business Profile and on Facebook Page text, photo and album posts, keeping their likes and comments. Instagram does not allow editing a caption after publishing, and Facebook videos, Reels and stories cannot be edited either: those targets keep their published text, and their accounts are listed in `not_updated_account_ids`. A post live only on such targets returns `409 post.state_invalid`.
+	// When only some live targets accept the edit, the response is the error from the first one that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
 	// `queue_id` moves the post to another Queue, and `queue_id: null` takes it out of its Queue and keeps its time.
 	// Omit `targets` to keep the current ones. Sending `targets` replaces them all.
 	// `scheduled_at` must be in the future, and a scheduled post must keep at least one target.
@@ -33497,7 +33556,7 @@ type UpdatePostResult struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *PostResponse
+	JSON200 *UpdatePostResponse
 	// JSON400 the response for an HTTP 400 `application/json` response
 	JSON400 *ErrorResponse
 	// JSON401 the response for an HTTP 401 `application/json` response
@@ -33511,7 +33570,7 @@ type UpdatePostResult struct {
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r UpdatePostResult) GetJSON200() *PostResponse {
+func (r UpdatePostResult) GetJSON200() *UpdatePostResponse {
 	return r.JSON200
 }
 
@@ -38008,8 +38067,9 @@ func (c *ClientWithResponses) GetPostWithResponse(ctx context.Context, postId st
 //
 // Updates the text, media, schedule time, targets, or hidden status of a pending post.
 // Posts in `draft`, `scheduled`, or `failed` status accept every field. Updating a failed post does not republish it: call `POST /posts/{post_id}/retry` afterwards.
-// A `published` or `partial` post can be edited only when it is live on Google Business Profile alone. Send `text`, `platform_data.google.callToAction`, or both: any other field returns `400 validation.field_not_editable`. A post also live on another platform returns `409 post.state_invalid`.
-// When the post is live on several Google locations and only some accept the edit, the response is the error from the first location that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
+// A `published` or `partial` post accepts `text`, plus `platform_data.google.callToAction` when it is live on Google Business Profile. Any other field returns `400 validation.field_not_editable`.
+// The new text is applied in place on Google Business Profile and on Facebook Page text, photo and album posts, keeping their likes and comments. Instagram does not allow editing a caption after publishing, and Facebook videos, Reels and stories cannot be edited either: those targets keep their published text, and their accounts are listed in `not_updated_account_ids`. A post live only on such targets returns `409 post.state_invalid`.
+// When only some live targets accept the edit, the response is the error from the first one that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
 // `queue_id` moves the post to another Queue, and `queue_id: null` takes it out of its Queue and keeps its time.
 // Omit `targets` to keep the current ones. Sending `targets` replaces them all.
 // `scheduled_at` must be in the future, and a scheduled post must keep at least one target.
@@ -38029,8 +38089,9 @@ func (c *ClientWithResponses) UpdatePostWithBodyWithResponse(ctx context.Context
 //
 // Updates the text, media, schedule time, targets, or hidden status of a pending post.
 // Posts in `draft`, `scheduled`, or `failed` status accept every field. Updating a failed post does not republish it: call `POST /posts/{post_id}/retry` afterwards.
-// A `published` or `partial` post can be edited only when it is live on Google Business Profile alone. Send `text`, `platform_data.google.callToAction`, or both: any other field returns `400 validation.field_not_editable`. A post also live on another platform returns `409 post.state_invalid`.
-// When the post is live on several Google locations and only some accept the edit, the response is the error from the first location that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
+// A `published` or `partial` post accepts `text`, plus `platform_data.google.callToAction` when it is live on Google Business Profile. Any other field returns `400 validation.field_not_editable`.
+// The new text is applied in place on Google Business Profile and on Facebook Page text, photo and album posts, keeping their likes and comments. Instagram does not allow editing a caption after publishing, and Facebook videos, Reels and stories cannot be edited either: those targets keep their published text, and their accounts are listed in `not_updated_account_ids`. A post live only on such targets returns `409 post.state_invalid`.
+// When only some live targets accept the edit, the response is the error from the first one that refused, and `error.meta` lists `updated_account_ids` and `not_updated_account_ids`. Send the same request again to finish the edit.
 // `queue_id` moves the post to another Queue, and `queue_id: null` takes it out of its Queue and keeps its time.
 // Omit `targets` to keep the current ones. Sending `targets` replaces them all.
 // `scheduled_at` must be in the future, and a scheduled post must keep at least one target.
@@ -45823,7 +45884,7 @@ func ParseUpdatePostResult(rsp *http.Response) (*UpdatePostResult, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PostResponse
+		var dest UpdatePostResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
