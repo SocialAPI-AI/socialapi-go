@@ -1877,7 +1877,7 @@ type CreatePostRequest struct {
 	// Example: Check out our new product launch! #newproduct
 	Text *string `json:"text,omitempty"`
 
-	// Title Title is an optional post title (used by LinkedIn, Google).
+	// Title Title is an optional post title (used by LinkedIn, Google). On LinkedIn it is the title shown on an attached document (PDF, PPT, PPTX, DOC, DOCX); without it the document takes its file name.
 	//
 	// Example: Exciting News from Acme Corp
 	Title *string `json:"title,omitempty"`
@@ -3559,6 +3559,12 @@ type Media struct {
 
 // MediaConstraints defines model for MediaConstraints.
 type MediaConstraints struct {
+	// MaxDocumentPages Most pages the platform accepts in one document. The platform checks it when it processes the file.
+	MaxDocumentPages *int `json:"max_document_pages,omitempty"`
+
+	// MaxDocumentSizeBytes Largest document the platform accepts, in bytes.
+	MaxDocumentSizeBytes *int `json:"max_document_size_bytes,omitempty"`
+
 	// MaxImageSizeBytes 0 = not supported
 	MaxImageSizeBytes *int `json:"max_image_size_bytes,omitempty"`
 
@@ -3573,6 +3579,9 @@ type MediaConstraints struct {
 
 	// MinVideoDurationSec 0 = no min
 	MinVideoDurationSec *int `json:"min_video_duration_sec,omitempty"`
+
+	// SupportedDocumentTypes Document MIME types the platform publishes as a document post. Empty when the platform accepts no documents.
+	SupportedDocumentTypes *[]string `json:"supported_document_types,omitempty"`
 
 	// SupportedImageTypes MIME types, e.g. "image/jpeg"
 	SupportedImageTypes *[]string `json:"supported_image_types,omitempty"`
@@ -6698,7 +6707,7 @@ type UploadMediaMultipartBody struct {
 
 // GetMediaUploadUrlParams defines parameters for GetMediaUploadUrl.
 type GetMediaUploadUrlParams struct {
-	// MediaType MIME type (e.g. image/jpeg)
+	// MediaType MIME type (e.g. image/jpeg, video/mp4, or application/pdf for a LinkedIn document post)
 	MediaType string `form:"media_type" json:"media_type"`
 
 	// Filename Original filename
